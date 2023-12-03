@@ -1,1 +1,1 @@
-from .core import Python3Template
+from .core import LcdPixelate
