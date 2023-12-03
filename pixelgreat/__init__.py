@@ -1,1 +1,1 @@
-from .core import LcdPixelate
+from core import LcdPixelate

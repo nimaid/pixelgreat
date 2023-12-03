@@ -4,29 +4,30 @@ import argparse
 from enum import Enum
 from PIL import Image
 
-from .constants import Direction, DESCRIPTION
-from . import helpers
-from . import filter
+from constants import Direction, ScreenType, DESCRIPTION
+import helpers
+import filter
 
 # ---- MAIN CLASSES ----
 
 
 class LcdPixelate:
     def __init__(self,
-                 pixel_width,
-                 pixel_height=None,  # Defaults to pixel_width
-                 pixel_padding=None,  # Defaults to a reasonable value for the pixel_width and pixel_height
+                 pixel_size,
+                 pixel_aspect=1.0,
+                 pixel_padding=0.5,
                  pixel_rounding=0.0,
                  pixel_direction=Direction.VERTICAL,
+                 blur=0.0,
+                 blur_ratio=1.0,
                  filter_strength=1.0,
                  bloom_strength=0.5
                  ):
-        self.pixel_width = pixel_width
+        if pixel_size < 3:
+            raise ValueError("Pixel size must be at least 3")
+        self.pixel_size = pixel_size
 
-        if pixel_height is None:
-            self.pixel_height = self.pixel_width
-        else:
-            self.pixel_height = pixel_height
+        self.pixel_aspect = max(abs(pixel_aspect), 0.01)
 
         self.pixel_padding = helpers.clip(pixel_padding, 0, 1)
 
@@ -34,12 +35,23 @@ class LcdPixelate:
 
         self.pixel_direction = pixel_direction
 
+        self.blur = helpers.clip(blur, 0, 1)
+
+        self.blur_ratio = helpers.clip(blur_ratio, 0, 1)
+
         self.filter_strength = helpers.clip(filter_strength, 0, 1)
 
         self.bloom_strength = helpers.clip(bloom_strength, 0, 1)
 
+    def process(self, image):
+        return filter.square_pixels(size=self.pixel_size,
+                                    aspect=self.pixel_aspect,
+                                    padding=self.pixel_padding,
+                                    rounding=self.pixel_rounding,
+                                    direction=self.pixel_direction)
 
 # ---- PROGRAM EXECUTION ----
+
 
 # Parse arguments
 def parse_args(args):
@@ -63,7 +75,8 @@ def parse_args(args):
 def main(raw_args):
     args = parse_args(raw_args)
     
-    print(args)
+    test = LcdPixelate(6)
+    test.process("Wow")
 
 
 def run():
