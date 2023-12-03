@@ -1,0 +1,8 @@
+[project]
+name = "pixelgreat"
+version = "0.0.1"
+description = "A hyper-realistic RGB pixel filter"
+authors = ["Ella Jameson <ellagjameson@gmail.com>"]
+
+[project.dependencies]
+Pillow = "^10.0"
