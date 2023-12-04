@@ -6,7 +6,7 @@ from PIL import Image
 
 from constants import Direction, ScreenType, DESCRIPTION
 import helpers
-import filter
+import filters
 
 
 # ---- MAIN CLASSES ----

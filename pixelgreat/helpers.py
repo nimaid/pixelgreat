@@ -36,17 +36,46 @@ def get_centered_dimensions(center, size):
     return start, end
 
 
+# A function to round to a given "division", like 0.5 instead of the default 1.0
+def round_to_division(value, division=1.0):
+    inverse = 1/division
+    return round(value * inverse) / inverse
+
+
 # Tile a PIL Image to fit a given frame size
-def tile_image(image_tile, size, background_color=(0, 0, 0)):
-    # TODO: Allow specification of tile counts, width and height, place ACCURATELY on center
+def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
+    # TODO: Fix this being misaligned with pixelate somehow
+    # TODO: Maybe add the option to specify a count tuple?
     new_image = Image.new(image_tile.mode, size, color=background_color)
 
-    x_count = math.ceil(new_image.width / image_tile.width)
-    y_count = math.ceil(new_image.height / image_tile.height)
+    if count is None:
+        # Position pastes based on tile size
+        x_count = math.ceil(new_image.width / image_tile.width)
+        y_count = math.ceil(new_image.height / image_tile.height)
 
-    for x in range(x_count):
-        for y in range(y_count):
-            new_image.paste(image_tile, (x * image_tile.width, y * image_tile.height))
+        for x in range(x_count):
+            for y in range(y_count):
+                new_image.paste(
+                    image_tile,
+                    (
+                        x * image_tile.width,
+                        y * image_tile.height
+                    )
+                )
+    else:
+        # Position pastes based on count tuple (can be a float)
+        x_count, y_count = count
+        x_count_int = math.ceil(x_count)
+        y_count_int = math.ceil(y_count)
+        for x in range(x_count_int):
+            for y in range(y_count_int):
+                new_image.paste(
+                    image_tile,
+                    (
+                        round((x / x_count) * new_image.width),
+                        round((y / y_count) * new_image.height)
+                    )
+                )
 
     return new_image
 

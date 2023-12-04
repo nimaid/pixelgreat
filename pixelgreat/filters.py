@@ -6,13 +6,16 @@ from constants import Direction, ScreenType
 
 
 def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
-    # Adjust aspect for later rotation if needed
-    if direction == Direction.VERTICAL:
+    # Get main pixel dimensions (float, used in calculations)
+    if direction == Direction.HORIZONTAL:
+        # Adjust aspect for later rotation if needed
         aspect = 1 / aspect
 
-    # Get main pixel dimensions (float, used in calculations)
-    width = size
-    height = size / aspect
+        width = size * aspect
+        height = size
+    else:
+        width = size
+        height = size / aspect
 
     # Get integer values for width and height (the REAL pixel count)
     width_px = round(width)
@@ -262,6 +265,23 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     return scanline_image
 
 
+# Calculate approximate pixel count to match target pixel size
+def get_approximate_pixel_count(size, pixel_width, pixel_aspect, direction, make_int=True):
+    # Calculate pixel height
+    pixel_height = pixel_width / pixel_aspect
+
+    # Calculate approximate pixel counts to match target size
+    pixels_wide = size[0] / pixel_width
+    pixels_tall = size[1] / pixel_height
+
+    # Round if needed
+    if make_int:
+        pixels_wide = round(pixels_wide)
+        pixels_tall = round(pixels_tall)
+
+    return pixels_wide, pixels_tall
+
+
 def pixelate_image(image,
                    pixel_size,
                    pixel_aspect,
@@ -272,16 +292,12 @@ def pixelate_image(image,
     if output_size is None:
         output_size = image.size
 
-    # Adjust aspect to horizontal if not horizontal (matches pattern in lcd)
-    if direction == Direction.VERTICAL:
-        pixel_aspect = 1 / pixel_aspect
-
-    # Calculate pixel height
-    pixel_height = pixel_size * pixel_aspect
-
-    # Calculate approximate pixel counts to match target size
-    pixels_wide = round(output_size[0] / pixel_size)
-    pixels_tall = round(output_size[1] / pixel_height)
+    pixels_wide, pixels_tall = get_approximate_pixel_count(
+        size=output_size,
+        pixel_width=pixel_size,
+        pixel_aspect=pixel_aspect,
+        direction=direction
+    )
 
     # Downscale image
     small_image = image.resize((pixels_wide, pixels_tall), resample=downscale_mode)
@@ -401,8 +417,48 @@ class ScreenFilter:
 
         self.strength = strength
 
+        # Compute the actual counts to tile with based on the screen type and size vars
+        if self.screen_type == ScreenType.CRT_MONITOR:
+            # 3:sqrt(3) inherent ratio, fixed
+            # We can just tile normally without worrying about alignment
+            self.pixel_count = None
+        elif self.screen_type == ScreenType.CRT_TV:
+            # 2:1 inherent ratio, changes with pixel_aspect
+            self.pixel_count = get_approximate_pixel_count(
+                pixel_width=self.pixel_size,
+                pixel_aspect=self.pixel_aspect,
+                size=self.size,
+                direction=self.direction,
+                make_int=False
+            )
+            # TODO: Fix aspect problems
+            # Adjust the correct dim and round to nearest 0.5
+            if self.direction == Direction.VERTICAL:
+                self.pixel_count = (
+                    helpers.round_to_division(self.pixel_count[0] / 2, 0.5),
+                    round(self.pixel_count[1])
+                )
+            else:
+                self.pixel_count = (
+                    round(self.pixel_count[0]),
+                    helpers.round_to_division(self.pixel_count[1] / 2, 0.5)
+                )
+        else:  # Default to LCD
+            # 1:1 inherent ratio, changes with pixel_aspect
+            self.pixel_count = get_approximate_pixel_count(
+                pixel_width=self.pixel_size,
+                pixel_aspect=self.pixel_aspect,
+                size=self.size,
+                direction=self.direction
+            )
+
         # Pre-compute a tiled filter image
-        self.filter_raw = helpers.tile_image(self.filter_tile, self.size)
+        self.filter_raw = helpers.tile_image(
+            self.filter_tile,
+            self.size,
+            background_color=(0, 0, 0),
+            count=self.pixel_count
+        )
 
         # Pre-computed adjusted filter image
         self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
@@ -558,8 +614,8 @@ class CompositeFilter:
                 image=image,
                 pixel_size=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
+                output_size=self.output_size,
                 direction=self.direction,
-                output_size=self.output_size
             )
         else:
             if image.size != self.output_size:
