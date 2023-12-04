@@ -7,12 +7,8 @@ from constants import Direction, ScreenType
 
 def lcd(size, aspect, padding, rounding, direction):
     # Get main pixel dimensions (float, used in calculations)
-    if direction == Direction.VERTICAL:
-        width = size
-        height = size / aspect
-    else:
-        height = size
-        width = size * aspect
+    width = size
+    height = size / aspect
 
     # Get integer values for width and height (the REAL pixel count)
     width_px = round(width)
@@ -43,72 +39,38 @@ def lcd(size, aspect, padding, rounding, direction):
     padding_right = padding_px - padding_left  # Also used for bottoms
 
     # Get variables use for drawing the color regions
-    if direction == Direction.VERTICAL:
-        rg_boundary_x = round(width / 3)
-        gb_boundary_x = round((2 * width) / 3)
+    rg_boundary_x = round(width / 3)
+    gb_boundary_x = round((2 * width) / 3)
 
-        if padding_px == 0:
-            red_start = (0, 0)
-            red_end = (rg_boundary_x - 1, height_px - 1)
+    if padding_px == 0:
+        red_start = (0, 0)
+        red_end = (rg_boundary_x - 1, height_px - 1)
 
-            green_start = (rg_boundary_x, 0)
-            green_end = (gb_boundary_x - 1, height_px - 1)
+        green_start = (rg_boundary_x, 0)
+        green_end = (gb_boundary_x - 1, height_px - 1)
 
-            blue_start = (gb_boundary_x, 0)
-            blue_end = (width_px - 1, height_px - 1)
-        else:
-            red_start = (padding_left, padding_left)
-            red_end = (
-                max((rg_boundary_x - padding_right) - 1, red_start[0]),
-                max((height_px - padding_right) - 1, red_start[1])
-            )
-
-            green_start = (rg_boundary_x + padding_left, padding_left)
-            green_end = (
-                max((gb_boundary_x - padding_right) - 1, green_start[0]),
-                max((height_px - padding_right) - 1, green_start[1])
-            )
-
-            blue_start = (gb_boundary_x + padding_left, padding_left)
-            blue_end = (
-                max((width_px - padding_right) - 1, blue_start[0]),
-                max((height_px - padding_right) - 1, blue_start[1])
-            )
-
-        color_size_px = red_end[0] - red_start[0]
+        blue_start = (gb_boundary_x, 0)
+        blue_end = (width_px - 1, height_px - 1)
     else:
-        rg_boundary_y = round(height / 3)
-        gb_boundary_y = round((2 * height) / 3)
+        red_start = (padding_left, padding_left)
+        red_end = (
+            max((rg_boundary_x - padding_right) - 1, red_start[0]),
+            max((height_px - padding_right) - 1, red_start[1])
+        )
 
-        if padding_px == 0:
-            red_start = (0, 0)
-            red_end = (width_px - 1, rg_boundary_y - 1)
+        green_start = (rg_boundary_x + padding_left, padding_left)
+        green_end = (
+            max((gb_boundary_x - padding_right) - 1, green_start[0]),
+            max((height_px - padding_right) - 1, green_start[1])
+        )
 
-            green_start = (0, rg_boundary_y)
-            green_end = (width_px - 1, gb_boundary_y - 1)
+        blue_start = (gb_boundary_x + padding_left, padding_left)
+        blue_end = (
+            max((width_px - padding_right) - 1, blue_start[0]),
+            max((height_px - padding_right) - 1, blue_start[1])
+        )
 
-            blue_start = (0, gb_boundary_y)
-            blue_end = (width_px - 1, height_px - 1)
-        else:
-            red_start = (padding_left, padding_left)
-            red_end = (
-                max((width_px - padding_right) - 1, red_start[0]),
-                max((rg_boundary_y - padding_right) - 1, red_start[1])
-            )
-
-            green_start = (padding_left, rg_boundary_y + padding_left)
-            green_end = (
-                max((width_px - padding_right) - 1, green_start[0]),
-                max((gb_boundary_y - padding_right) - 1, green_start[1])
-            )
-
-            blue_start = (padding_left, gb_boundary_y + padding_left)
-            blue_end = (
-                max((width_px - padding_right) - 1, blue_start[0]),
-                max((height_px - padding_right) - 1, blue_start[1])
-            )
-
-        color_size_px = red_end[1] - red_start[1]
+    color_size_px = red_end[0] - red_start[0]
 
     # Draw color regions
     if rounding > 0:
@@ -122,6 +84,10 @@ def lcd(size, aspect, padding, rounding, direction):
         filter_draw.rectangle((green_start, green_end), fill=(0, 255, 0))
         filter_draw.rectangle((blue_start, blue_end), fill=(0, 0, 255))
 
+    # Rotate if needed
+    if direction == Direction.HORIZONTAL:
+        filter_image = filter_image.rotate(270, expand=True)
+
     return filter_image
 
 
@@ -131,14 +97,11 @@ def crt_tv(size, aspect, padding, rounding, direction):
                        aspect=aspect,
                        padding=padding,
                        rounding=rounding,
-                       direction=direction
+                       direction=Direction.VERTICAL
                        )
 
     # Figure out the dimensions for the new filter
-    if direction == Direction.VERTICAL:
-        new_size = (single_pixel.width * 2, single_pixel.height)
-    else:
-        new_size = (single_pixel.width, single_pixel.height * 2)
+    new_size = (single_pixel.width * 2, single_pixel.height)
 
     # Make new image to paste old one onto
     both_pixels = Image.new("RGB", new_size, color=(0, 0, 0))
@@ -147,58 +110,37 @@ def crt_tv(size, aspect, padding, rounding, direction):
     both_pixels.paste(single_pixel, (0, 0))
 
     # Paste the second pixel in two parts
-    if direction == Direction.VERTICAL:
-        split_y = round(both_pixels.height / 2)
-        both_pixels.paste(single_pixel, (single_pixel.width, split_y))
-        both_pixels.paste(single_pixel, (single_pixel.width, split_y - single_pixel.height))
-    else:
-        split_x = round(both_pixels.width / 2)
-        both_pixels.paste(single_pixel, (split_x, single_pixel.height))
-        both_pixels.paste(single_pixel, (split_x - single_pixel.width, single_pixel.height))
+    split_y = round(both_pixels.height / 2)
+    both_pixels.paste(single_pixel, (single_pixel.width, split_y))
+    both_pixels.paste(single_pixel, (single_pixel.width, split_y - single_pixel.height))
+
+    # Rotate if needed
+    if direction == Direction.HORIZONTAL:
+        both_pixels = both_pixels.rotate(270, expand=True)
 
     return both_pixels
 
 
 def crt_monitor(size, padding, direction):
     # Get width and height from dot size (float, used for calculations)
-    if direction == Direction.HORIZONTAL:
-        width = size * 3
-        height = size * math.sqrt(3)
+    width = size * 3
+    height = size * math.sqrt(3)
 
-        # Get integer divisions for dot placement
-        height_divs = (
-            0,
-            round(height / 2),
-            round(height)
-        )
-        width_divs = (
-            0,
-            round(width * (1 / 6)),
-            round(width * (2 / 6)),
-            round(width * (3 / 6)),
-            round(width * (4 / 6)),
-            round(width * (5 / 6)),
-            round(width)
-        )
-    else:
-        height = size * 3
-        width = size * math.sqrt(3)
-
-        # Get integer divisions for dot placement
-        height_divs = (
-            0,
-            round(height * (1 / 6)),
-            round(height * (2 / 6)),
-            round(height * (3 / 6)),
-            round(height * (4 / 6)),
-            round(height * (5 / 6)),
-            round(height)
-        )
-        width_divs = (
-            0,
-            round(width / 2),
-            round(width)
-        )
+    # Get integer divisions for dot placement
+    height_divs = (
+        0,
+        round(height / 2),
+        round(height)
+    )
+    width_divs = (
+        0,
+        round(width * (1 / 6)),
+        round(width * (2 / 6)),
+        round(width * (3 / 6)),
+        round(width * (4 / 6)),
+        round(width * (5 / 6)),
+        round(width)
+    )
 
     # Make new black image
     filter_image = Image.new("RGB", (width_divs[-1], height_divs[-1]), (0, 0, 0))
@@ -216,106 +158,58 @@ def crt_monitor(size, padding, direction):
     # Get dot size
     dot_size = size * (1 - padding)
 
-    # Draw the dots
-    if direction == Direction.HORIZONTAL:
-        # Draw red dots
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[0], height_divs[0]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[6], height_divs[0]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((0, height_divs[2]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[6], height_divs[2]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[3], height_divs[1]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
+    # Draw red dots
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[0], height_divs[0]), (dot_size, dot_size)),
+        fill=(255, 0, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[6], height_divs[0]), (dot_size, dot_size)),
+        fill=(255, 0, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((0, height_divs[2]), (dot_size, dot_size)),
+        fill=(255, 0, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[6], height_divs[2]), (dot_size, dot_size)),
+        fill=(255, 0, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[3], height_divs[1]), (dot_size, dot_size)),
+        fill=(255, 0, 0)
+    )
 
-        # Draw green dots
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[0]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[2]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[5], height_divs[1]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
+    # Draw green dots
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[2], height_divs[0]), (dot_size, dot_size)),
+        fill=(0, 255, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[2], height_divs[2]), (dot_size, dot_size)),
+        fill=(0, 255, 0)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[5], height_divs[1]), (dot_size, dot_size)),
+        fill=(0, 255, 0)
+    )
 
-        # Draw blue dots
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[1], height_divs[1]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[4], height_divs[0]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[4], height_divs[2]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-    else:
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[0], height_divs[0]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[0]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((0, height_divs[6]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[6]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[1], height_divs[3]), (dot_size, dot_size)),
-            fill=(255, 0, 0)
-        )
+    # Draw blue dots
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[1], height_divs[1]), (dot_size, dot_size)),
+        fill=(0, 0, 255)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[4], height_divs[0]), (dot_size, dot_size)),
+        fill=(0, 0, 255)
+    )
+    filter_draw.ellipse(
+        helpers.get_centered_dimensions((width_divs[4], height_divs[2]), (dot_size, dot_size)),
+        fill=(0, 0, 255)
+    )
 
-        # Draw green dots
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[0], height_divs[2]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[2]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[1], height_divs[5]), (dot_size, dot_size)),
-            fill=(0, 255, 0)
-        )
-
-        # Draw blue dots
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[1], height_divs[1]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[0], height_divs[4]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-        filter_draw.ellipse(
-            helpers.get_centered_dimensions((width_divs[2], height_divs[4]), (dot_size, dot_size)),
-            fill=(0, 0, 255)
-        )
-
+    # Rotate if needed
+    if direction == Direction.VERTICAL:
+        filter_image = filter_image.rotate(270, expand=True)
 
     return filter_image
