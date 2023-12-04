@@ -265,7 +265,16 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     return scanline_image
 
 
-def pixelate(image, pixel_size, pixel_aspect, direction):
+def pixelate(image,
+             pixel_size,
+             pixel_aspect,
+             direction,
+             output_size=None,  # Defaults to the input image size
+             downscale_mode=Image.Resampling.HAMMING
+             ):
+    if output_size is None:
+        output_size = image.size
+
     # Adjust aspect to horizontal if not horizontal (matches pattern in lcd)
     if direction == Direction.VERTICAL:
         pixel_aspect = 1 / pixel_aspect
@@ -274,15 +283,14 @@ def pixelate(image, pixel_size, pixel_aspect, direction):
     pixel_height = pixel_size * pixel_aspect
 
     # Calculate approximate pixel counts to match target size
-    pixels_wide = round(image.width / pixel_size)
-    pixels_tall = round(image.height / pixel_height)
+    pixels_wide = round(output_size[0] / pixel_size)
+    pixels_tall = round(output_size[1] / pixel_height)
 
     # Downscale image
-    # Filter comparison: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#filters-comparison-table)
-    small_image = image.resize((pixels_wide, pixels_tall), resample=Image.Resampling.HAMMING)
+    small_image = image.resize((pixels_wide, pixels_tall), resample=downscale_mode)
 
-    # Upscale to original size
-    result = small_image.resize(image.size, resample=Image.Resampling.NEAREST)
+    # Upscale to the final size
+    result = small_image.resize(output_size, resample=Image.Resampling.NEAREST)
 
     return result
 
