@@ -1,11 +1,11 @@
 import math
-from PIL import Image, ImageDraw, ImageChops
+from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
 import helpers
 from constants import Direction, ScreenType
 
 
-def lcd(size, padding, direction, aspect, rounding):
+def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
     # Clip size (minimum of 3)
     size = max(size, 3)
 
@@ -18,7 +18,7 @@ def lcd(size, padding, direction, aspect, rounding):
     height_px = round(height)
 
     # Make new black image
-    filter_image = Image.new("RGB", (width_px, height_px), (0, 0, 0))
+    filter_image = Image.new(color_mode, (width_px, height_px), (0, 0, 0))
 
     # Make drawing object
     filter_draw = ImageDraw.Draw(filter_image)
@@ -94,20 +94,21 @@ def lcd(size, padding, direction, aspect, rounding):
     return filter_image
 
 
-def crt_tv(size, padding, direction, aspect, rounding):
+def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
     # Get the first half of the filter
     single_pixel = lcd(size=size,
                        padding=padding,
                        direction=Direction.VERTICAL,
                        aspect=aspect,
-                       rounding=rounding
+                       rounding=rounding,
+                       color_mode=color_mode
                        )
 
     # Figure out the dimensions for the new filter
     new_size = (single_pixel.width * 2, single_pixel.height)
 
     # Make new image to paste old one onto
-    both_pixels = Image.new("RGB", new_size, color=(0, 0, 0))
+    both_pixels = Image.new(color_mode, new_size, color=(0, 0, 0))
 
     # Paste the first pixel
     both_pixels.paste(single_pixel, (0, 0))
@@ -124,7 +125,7 @@ def crt_tv(size, padding, direction, aspect, rounding):
     return both_pixels
 
 
-def crt_monitor(size, padding, direction):
+def crt_monitor(size, padding, direction, color_mode="RGB"):
     # Get width and height from dot size (float, used for calculations)
     width = size * 3
     height = size * math.sqrt(3)
@@ -146,7 +147,7 @@ def crt_monitor(size, padding, direction):
     )
 
     # Make new black image
-    filter_image = Image.new("RGB", (width_divs[-1], height_divs[-1]), (0, 0, 0))
+    filter_image = Image.new(color_mode, (width_divs[-1], height_divs[-1]), (0, 0, 0))
 
     # Make drawing object
     filter_draw = ImageDraw.Draw(filter_image)
@@ -218,6 +219,45 @@ def crt_monitor(size, padding, direction):
     return filter_image
 
 
+def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
+    # Create new black image for building the scanline filter
+    scanline_image = Image.new(color_mode, size, color=(0, 0, 0))
+
+    # If the line size is 0, we know it should be all black
+    if line_size == 0:
+        return scanline_image
+
+    # Make drawing object
+    scanline_draw = ImageDraw.Draw(scanline_image)
+
+    # Get line width (integer)
+    line_width = round(spacing * helpers.clip(line_size, 0, 1))
+
+    # Draw hard lines
+    if direction == Direction.VERTICAL:
+        line_count = math.ceil(scanline_image.height / spacing)
+        for line in range(line_count):
+            line_start_y = round(line * spacing)
+            line_end_y = line_start_y + line_width
+
+            scanline_draw.rectangle(((0, line_start_y), (scanline_image.width, line_end_y)), fill=(255, 255, 255))
+    else:
+        line_count = math.ceil(scanline_image.width / spacing)
+        for line in range(line_count):
+            line_start_x = round(line * spacing)
+            line_end_x = line_start_x + line_width
+
+            scanline_draw.rectangle(((line_start_x, 0), (line_end_x, scanline_image.height)), fill=(255, 255, 255))
+
+    # Apply blur
+    if blur > 0:
+        blur_amt = line_width * blur
+        scanline_image = scanline_image.filter(ImageFilter.GaussianBlur(blur_amt))
+
+    return scanline_image
+
+
+# A reusable class to handle applying the RGB filter
 class ScreenFilter:
     def __init__(self,
                  size,
@@ -227,7 +267,8 @@ class ScreenFilter:
                  direction,
                  pixel_aspect=None,
                  rounding=None,
-                 strength=1.0
+                 strength=1.0,
+                 color_mode="RGB"
                  ):
         self.size = size
 
@@ -248,12 +289,15 @@ class ScreenFilter:
         self.pixel_aspect = pixel_aspect
         self.rounding = rounding
 
+        self.color_mode = color_mode
+
         # Get the filter tile image
         if self.screen_type == ScreenType.CRT_MONITOR:
             self.filter_tile = crt_monitor(
                 size=self.pixel_size,
                 padding=self.pixel_padding,
-                direction=self.direction
+                direction=self.direction,
+                color_mode=self.color_mode
             )
         elif self.screen_type == ScreenType.CRT_TV:
             self.filter_tile = crt_tv(
@@ -261,7 +305,8 @@ class ScreenFilter:
                 padding=self.pixel_padding,
                 direction=self.direction,
                 aspect=self.pixel_aspect,
-                rounding=self.rounding
+                rounding=self.rounding,
+                color_mode=self.color_mode
             )
         else:  # Default to LCD
             self.filter_tile = lcd(
@@ -269,7 +314,8 @@ class ScreenFilter:
                 padding=self.pixel_padding,
                 direction=self.direction,
                 aspect=self.pixel_aspect,
-                rounding=self.rounding
+                rounding=self.rounding,
+                color_mode=self.color_mode
             )
 
         self.strength = strength
@@ -283,7 +329,63 @@ class ScreenFilter:
     # Apply the filter to a desired image
     def apply(self, image):
         if image.size != self.size:
-            raise ValueError(f"Input image size \"{image.size}\" does not match filter size \"{self.size}\"")
+            raise ValueError(f"Input image size \"{image.size}\" "
+                             f"does not match filter size \"{self.size}\"")
+        if image.mode != self.color_mode:
+            raise ValueError(f"Input image color mode \"{image.mode}\" "
+                             f"does not match filter color mode \"{self.color_mode}\"")
+
+        result = ImageChops.multiply(image, self.filter)
+
+        return result
+
+
+# A reusable class to handle applying scanlines
+class ScanlineFilter:
+    def __init__(self,
+                 size,
+                 line_spacing,
+                 line_size,
+                 line_blur,
+                 direction,
+                 strength=1.0,
+                 color_mode="RGB"
+                 ):
+        self.size = size
+
+        self.line_spacing = line_spacing
+
+        self. line_size = line_size
+
+        self.line_blur = line_blur
+
+        self.direction = direction
+
+        self.strength = strength
+
+        self.color_mode = color_mode
+
+        # Pre-compute filter image
+        self.filter_raw = scanlines(
+            size=self.size,
+            spacing=self.line_spacing,
+            line_size=self. line_size,
+            blur=self.line_blur,
+            direction=self.direction,
+            color_mode=self.color_mode
+        )
+
+        # Pre-computed adjusted filter image
+        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
+
+    # Apply the filter to a desired image
+    def apply(self, image):
+        if image.size != self.size:
+            raise ValueError(f"Input image size \"{image.size}\" "
+                             f"does not match filter size \"{self.size}\"")
+        if image.mode != self.color_mode:
+            raise ValueError(f"Input image color mode \"{image.mode}\" "
+                             f"does not match filter color mode \"{self.color_mode}\"")
 
         result = ImageChops.multiply(image, self.filter)
 
