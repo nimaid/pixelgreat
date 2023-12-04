@@ -44,8 +44,6 @@ def round_to_division(value, division=1.0):
 
 # Tile a PIL Image to fit a given frame size
 def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
-    # TODO: Fix this being misaligned with pixelate somehow
-    # TODO: Maybe add the option to specify a count tuple?
     new_image = Image.new(image_tile.mode, size, color=background_color)
 
     if count is None:
@@ -55,13 +53,7 @@ def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
 
         for x in range(x_count):
             for y in range(y_count):
-                new_image.paste(
-                    image_tile,
-                    (
-                        x * image_tile.width,
-                        y * image_tile.height
-                    )
-                )
+                new_image.paste(image_tile, (x * image_tile.width, y * image_tile.height))
     else:
         # Position pastes based on count tuple (can be a float)
         x_count, y_count = count
@@ -69,13 +61,26 @@ def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
         y_count_int = math.ceil(y_count)
         for x in range(x_count_int):
             for y in range(y_count_int):
-                new_image.paste(
-                    image_tile,
-                    (
+                tile_start = (
                         round((x / x_count) * new_image.width),
                         round((y / y_count) * new_image.height)
                     )
+                tile_end = (
+                    round(((x + 1) / x_count) * new_image.width),
+                    round(((y + 1) / y_count) * new_image.height)
                 )
+
+                target_size = (
+                    tile_end[0] - tile_start[0],
+                    tile_end[1] - tile_start[1]
+                )
+
+                if image_tile.size == target_size:
+                    this_tile = image_tile
+                else:
+                    this_tile = image_tile.resize(target_size, resample=Image.Resampling.BICUBIC)
+
+                new_image.paste(this_tile, tile_start)
 
     return new_image
 

@@ -99,21 +99,20 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
 
 
 def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
-    # Adjust aspect for later rotation if needed
-    if direction == Direction.VERTICAL:
-        aspect = 1 / aspect
-
     # Get the first half of the filter
     single_pixel = lcd(size=size,
                        padding=padding,
-                       direction=Direction.VERTICAL,
+                       direction=direction,
                        aspect=aspect,
                        rounding=rounding,
                        color_mode=color_mode
                        )
 
     # Figure out the dimensions for the new filter
-    new_size = (single_pixel.width * 2, single_pixel.height)
+    if direction == Direction.VERTICAL:
+        new_size = (single_pixel.width * 2, single_pixel.height)
+    else:
+        new_size = (single_pixel.width, single_pixel.height * 2)
 
     # Make new image to paste old one onto
     both_pixels = Image.new(color_mode, new_size, color=(0, 0, 0))
@@ -122,13 +121,14 @@ def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
     both_pixels.paste(single_pixel, (0, 0))
 
     # Paste the second pixel in two parts
-    split_y = round(both_pixels.height / 2)
-    both_pixels.paste(single_pixel, (single_pixel.width, split_y))
-    both_pixels.paste(single_pixel, (single_pixel.width, split_y - single_pixel.height))
-
-    # Rotate if needed
-    if direction == Direction.HORIZONTAL:
-        both_pixels = both_pixels.rotate(270, expand=True)
+    if direction == Direction.VERTICAL:
+        split_y = round(both_pixels.height / 2)
+        both_pixels.paste(single_pixel, (single_pixel.width, split_y))
+        both_pixels.paste(single_pixel, (single_pixel.width, split_y - single_pixel.height))
+    else:
+        split_x = round(both_pixels.width / 2)
+        both_pixels.paste(single_pixel, (split_x, single_pixel.height))
+        both_pixels.paste(single_pixel, (split_x - single_pixel.width, single_pixel.height))
 
     return both_pixels
 
@@ -431,7 +431,7 @@ class ScreenFilter:
                 direction=self.direction,
                 make_int=False
             )
-            # TODO: Fix aspect problems
+
             # Adjust the correct dim and round to nearest 0.5
             if self.direction == Direction.VERTICAL:
                 self.pixel_count = (
