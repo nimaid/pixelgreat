@@ -48,12 +48,7 @@ class LcdPixelate:
         self.bloom_strength = helpers.clip(bloom_strength, 0, 1)
 
     def process(self, image):
-        return filter.lcd(size=self.pixel_size,
-                          aspect=self.pixel_aspect,
-                          padding=self.pixel_padding,
-                          rounding=self.pixel_rounding,
-                          direction=self.pixel_direction
-                          )
+        pass
 
 
 # ---- PROGRAM EXECUTION ----

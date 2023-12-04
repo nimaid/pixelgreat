@@ -1,11 +1,14 @@
 import math
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops
 
 import helpers
 from constants import Direction, ScreenType
 
 
-def lcd(size, aspect, padding, rounding, direction):
+def lcd(size, padding, direction, aspect, rounding):
+    # Clip size (minimum of 3)
+    size = max(size, 3)
+
     # Get main pixel dimensions (float, used in calculations)
     width = size
     height = size / aspect
@@ -91,13 +94,13 @@ def lcd(size, aspect, padding, rounding, direction):
     return filter_image
 
 
-def crt_tv(size, aspect, padding, rounding, direction):
+def crt_tv(size, padding, direction, aspect, rounding):
     # Get the first half of the filter
     single_pixel = lcd(size=size,
-                       aspect=aspect,
                        padding=padding,
-                       rounding=rounding,
-                       direction=Direction.VERTICAL
+                       direction=Direction.VERTICAL,
+                       aspect=aspect,
+                       rounding=rounding
                        )
 
     # Figure out the dimensions for the new filter
@@ -213,3 +216,75 @@ def crt_monitor(size, padding, direction):
         filter_image = filter_image.rotate(270, expand=True)
 
     return filter_image
+
+
+class ScreenFilter:
+    def __init__(self,
+                 size,
+                 screen_type,
+                 pixel_size,
+                 pixel_padding,
+                 direction,
+                 pixel_aspect=None,
+                 rounding=None,
+                 strength=1.0
+                 ):
+        self.size = size
+
+        self.screen_type = screen_type
+
+        self.pixel_size = pixel_size
+
+        self.pixel_padding = pixel_padding
+
+        self.direction = direction
+
+        if self.screen_type in [ScreenType.LCD, ScreenType.CRT_TV]:
+            if pixel_aspect is None:
+                raise ValueError("This screen type requires the argument pixel_aspect")
+            if rounding is None:
+                raise ValueError("This screen type requires the argument rounding")
+
+        self.pixel_aspect = pixel_aspect
+        self.rounding = rounding
+
+        # Get the filter tile image
+        if self.screen_type == ScreenType.CRT_MONITOR:
+            self.filter_tile = crt_monitor(
+                size=self.pixel_size,
+                padding=self.pixel_padding,
+                direction=self.direction
+            )
+        elif self.screen_type == ScreenType.CRT_TV:
+            self.filter_tile = crt_tv(
+                size=self.pixel_size,
+                padding=self.pixel_padding,
+                direction=self.direction,
+                aspect=self.pixel_aspect,
+                rounding=self.rounding
+            )
+        else:  # Default to LCD
+            self.filter_tile = lcd(
+                size=self.pixel_size,
+                padding=self.pixel_padding,
+                direction=self.direction,
+                aspect=self.pixel_aspect,
+                rounding=self.rounding
+            )
+
+        self.strength = strength
+
+        # Pre-compute a tiled filter image
+        self.filter_raw = helpers.tile_image(self.filter_tile, self.size)
+
+        # Pre-computed adjusted filter image
+        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
+
+    # Apply the filter to a desired image
+    def apply(self, image):
+        if image.size != self.size:
+            raise ValueError(f"Input image size \"{image.size}\" does not match filter size \"{self.size}\"")
+
+        result = ImageChops.multiply(image, self.filter)
+
+        return result

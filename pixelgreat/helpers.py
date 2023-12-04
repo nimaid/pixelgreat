@@ -1,6 +1,6 @@
 import os
-
-# Define commonly used helper functions
+import math
+from PIL import Image
 
 
 # General purpose text input stripper
@@ -33,4 +33,33 @@ def get_centered_dimensions(center, size):
         center[1] + (size[1] / 2),
     )
 
-    return (start, end)
+    return start, end
+
+
+# Tile a PIL Image to fit a given frame size
+def tile_image(image_tile, size):
+    new_image = Image.new("RGB", size, color=(0, 0, 0))
+
+    x_count = math.ceil(new_image.width / image_tile.width)
+    y_count = math.ceil(new_image.height / image_tile.height)
+
+    for x in range(x_count):
+        for y in range(y_count):
+            new_image.paste(image_tile, (x * image_tile.width, y * image_tile.height))
+
+    return new_image
+
+
+# Mix a PIL image with white
+def lighten_image(image, factor):
+    if factor <= 0:
+        return image
+
+    white_image = Image.new(image.mode, image.size, (255, 255, 255))
+
+    if factor >= 1:
+        return white_image
+
+    new_image = Image.blend(image, white_image, factor)
+
+    return new_image
