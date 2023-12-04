@@ -9,6 +9,10 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
     # Clip size (minimum of 3)
     size = max(size, 3)
 
+    # Adjust aspect for later rotation if needed
+    if direction == Direction.VERTICAL:
+        aspect = 1 / aspect
+
     # Get main pixel dimensions (float, used in calculations)
     width = size
     height = size / aspect
@@ -95,6 +99,10 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
 
 
 def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
+    # Adjust aspect for later rotation if needed
+    if direction == Direction.VERTICAL:
+        aspect = 1 / aspect
+
     # Get the first half of the filter
     single_pixel = lcd(size=size,
                        padding=padding,
@@ -257,6 +265,80 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     return scanline_image
 
 
+def pixelate(image, pixel_size, pixel_aspect, direction):
+    # Adjust aspect to horizontal if not horizontal (matches pattern in lcd)
+    if direction == Direction.VERTICAL:
+        pixel_aspect = 1 / pixel_aspect
+
+    # Calculate pixel height
+    pixel_height = pixel_size * pixel_aspect
+
+    # Calculate approximate pixel counts to match target size
+    pixels_wide = round(image.width / pixel_size)
+    pixels_tall = round(image.height / pixel_height)
+
+    # Downscale image
+    # Filter comparison: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#filters-comparison-table)
+    small_image = image.resize((pixels_wide, pixels_tall), resample=Image.Resampling.HAMMING)
+
+    # Upscale to original size
+    result = small_image.resize(image.size, resample=Image.Resampling.NEAREST)
+
+    return result
+
+
+# A reusable class to handle applying scanlines
+class ScanlineFilter:
+    def __init__(self,
+                 size,
+                 line_spacing,
+                 line_size,
+                 line_blur,
+                 direction,
+                 strength=1.0,
+                 color_mode="RGB"
+                 ):
+        self.size = size
+
+        self.line_spacing = line_spacing
+
+        self. line_size = line_size
+
+        self.line_blur = line_blur
+
+        self.direction = direction
+
+        self.strength = strength
+
+        self.color_mode = color_mode
+
+        # Pre-compute filter image
+        self.filter_raw = scanlines(
+            size=self.size,
+            spacing=self.line_spacing,
+            line_size=self. line_size,
+            blur=self.line_blur,
+            direction=self.direction,
+            color_mode=self.color_mode
+        )
+
+        # Pre-computed adjusted filter image
+        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
+
+    # Apply the filter to a desired image
+    def apply(self, image):
+        if image.size != self.size:
+            raise ValueError(f"Input image size \"{image.size}\" "
+                             f"does not match filter size \"{self.size}\"")
+        if image.mode != self.color_mode:
+            raise ValueError(f"Input image color mode \"{image.mode}\" "
+                             f"does not match filter color mode \"{self.color_mode}\"")
+
+        result = ImageChops.multiply(image, self.filter)
+
+        return result
+
+
 # A reusable class to handle applying the RGB filter
 class ScreenFilter:
     def __init__(self,
@@ -340,53 +422,3 @@ class ScreenFilter:
         return result
 
 
-# A reusable class to handle applying scanlines
-class ScanlineFilter:
-    def __init__(self,
-                 size,
-                 line_spacing,
-                 line_size,
-                 line_blur,
-                 direction,
-                 strength=1.0,
-                 color_mode="RGB"
-                 ):
-        self.size = size
-
-        self.line_spacing = line_spacing
-
-        self. line_size = line_size
-
-        self.line_blur = line_blur
-
-        self.direction = direction
-
-        self.strength = strength
-
-        self.color_mode = color_mode
-
-        # Pre-compute filter image
-        self.filter_raw = scanlines(
-            size=self.size,
-            spacing=self.line_spacing,
-            line_size=self. line_size,
-            blur=self.line_blur,
-            direction=self.direction,
-            color_mode=self.color_mode
-        )
-
-        # Pre-computed adjusted filter image
-        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
-
-    # Apply the filter to a desired image
-    def apply(self, image):
-        if image.size != self.size:
-            raise ValueError(f"Input image size \"{image.size}\" "
-                             f"does not match filter size \"{self.size}\"")
-        if image.mode != self.color_mode:
-            raise ValueError(f"Input image color mode \"{image.mode}\" "
-                             f"does not match filter color mode \"{self.color_mode}\"")
-
-        result = ImageChops.multiply(image, self.filter)
-
-        return result
