@@ -8,6 +8,7 @@ from constants import Direction, ScreenType, DESCRIPTION
 import helpers
 import filter
 
+
 # ---- MAIN CLASSES ----
 
 
@@ -15,9 +16,10 @@ class LcdPixelate:
     def __init__(self,
                  pixel_size,
                  pixel_aspect=1.0,
-                 pixel_padding=0.5,
-                 pixel_rounding=0.0,
+                 pixel_padding=0.25,
+                 pixel_rounding=0.25,
                  pixel_direction=Direction.VERTICAL,
+                 overlay_only=False,
                  blur=0.0,
                  blur_ratio=1.0,
                  filter_strength=1.0,
@@ -33,6 +35,8 @@ class LcdPixelate:
 
         self.pixel_rounding = helpers.clip(pixel_rounding, 0, 1)
 
+        self.overlay_only = overlay_only
+
         self.pixel_direction = pixel_direction
 
         self.blur = helpers.clip(blur, 0, 1)
@@ -44,11 +48,13 @@ class LcdPixelate:
         self.bloom_strength = helpers.clip(bloom_strength, 0, 1)
 
     def process(self, image):
-        return filter.square_pixels(size=self.pixel_size,
-                                    aspect=self.pixel_aspect,
-                                    padding=self.pixel_padding,
-                                    rounding=self.pixel_rounding,
-                                    direction=self.pixel_direction)
+        return filter.lcd(size=self.pixel_size,
+                          aspect=self.pixel_aspect,
+                          padding=self.pixel_padding,
+                          rounding=self.pixel_rounding,
+                          direction=self.pixel_direction
+                          )
+
 
 # ---- PROGRAM EXECUTION ----
 
@@ -68,13 +74,13 @@ def parse_args(args):
     parser.add_argument("-o", "--operation", dest="opcode", type=str, required=False, default="+",
         help="the operation to perform on the arguments, either \"+\", \"-\", \"*\", or \"/\" [+]")
     '''
-    
+
     return parser.parse_args()
 
 
 def main(raw_args):
     args = parse_args(raw_args)
-    
+
     test = LcdPixelate(6)
     test.process("Wow")
 
