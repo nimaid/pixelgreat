@@ -37,8 +37,9 @@ def get_centered_dimensions(center, size):
 
 
 # Tile a PIL Image to fit a given frame size
-def tile_image(image_tile, size):
-    new_image = Image.new(image_tile.mode, size, color=(0, 0, 0))
+def tile_image(image_tile, size, background_color=(0, 0, 0)):
+    # TODO: Allow specification of tile counts, width and height, place ACCURATELY on center
+    new_image = Image.new(image_tile.mode, size, color=background_color)
 
     x_count = math.ceil(new_image.width / image_tile.width)
     y_count = math.ceil(new_image.height / image_tile.height)

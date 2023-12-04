@@ -6,9 +6,6 @@ from constants import Direction, ScreenType
 
 
 def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
-    # Clip size (minimum of 3)
-    size = max(size, 3)
-
     # Adjust aspect for later rotation if needed
     if direction == Direction.VERTICAL:
         aspect = 1 / aspect
@@ -134,6 +131,9 @@ def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
 
 
 def crt_monitor(size, padding, direction, color_mode="RGB"):
+    # Adjust size to more correctly match real mapping for pixel sizes
+    size = (size / math.sqrt(3))
+
     # Get width and height from dot size (float, used for calculations)
     width = size * 3
     height = size * math.sqrt(3)
@@ -159,9 +159,6 @@ def crt_monitor(size, padding, direction, color_mode="RGB"):
 
     # Make drawing object
     filter_draw = ImageDraw.Draw(filter_image)
-
-    # Clip padding
-    padding = helpers.clip(padding, 0, 1)
 
     # If padding is  1, know it should be full black, so we should return the black image now
     if padding == 1:
@@ -239,10 +236,10 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     scanline_draw = ImageDraw.Draw(scanline_image)
 
     # Get line width (integer)
-    line_width = round(spacing * helpers.clip(line_size, 0, 1))
+    line_width = round(spacing * line_size)
 
     # Draw hard lines
-    if direction == Direction.VERTICAL:
+    if direction == Direction.HORIZONTAL:
         line_count = math.ceil(scanline_image.height / spacing)
         for line in range(line_count):
             line_start_y = round(line * spacing)
@@ -265,13 +262,13 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     return scanline_image
 
 
-def pixelate(image,
-             pixel_size,
-             pixel_aspect,
-             direction,
-             output_size=None,  # Defaults to the input image size
-             downscale_mode=Image.Resampling.HAMMING
-             ):
+def pixelate_image(image,
+                   pixel_size,
+                   pixel_aspect,
+                   direction,
+                   output_size=None,  # Defaults to the input image size
+                   downscale_mode=Image.Resampling.HAMMING
+                   ):
     if output_size is None:
         output_size = image.size
 
@@ -310,7 +307,7 @@ class ScanlineFilter:
 
         self.line_spacing = line_spacing
 
-        self. line_size = line_size
+        self.line_size = line_size
 
         self.line_blur = line_blur
 
@@ -324,7 +321,7 @@ class ScanlineFilter:
         self.filter_raw = scanlines(
             size=self.size,
             spacing=self.line_spacing,
-            line_size=self. line_size,
+            line_size=self.line_size,
             blur=self.line_blur,
             direction=self.direction,
             color_mode=self.color_mode
@@ -369,12 +366,6 @@ class ScreenFilter:
         self.pixel_padding = pixel_padding
 
         self.direction = direction
-
-        if self.screen_type in [ScreenType.LCD, ScreenType.CRT_TV]:
-            if pixel_aspect is None:
-                raise ValueError("This screen type requires the argument pixel_aspect")
-            if rounding is None:
-                raise ValueError("This screen type requires the argument rounding")
 
         self.pixel_aspect = pixel_aspect
         self.rounding = rounding
@@ -430,3 +421,162 @@ class ScreenFilter:
         return result
 
 
+# A reusable class to handle the composite effects
+class CompositeFilter:
+    def __init__(self,
+                 size,
+                 screen_type,
+                 pixel_size,
+                 pixel_padding,
+                 direction,
+                 blur=0.0,
+                 pixel_aspect=None,
+                 rounding=None,
+                 scanline_spacing=None,
+                 scanline_size=None,
+                 scanline_blur=None,
+                 scanline_strength=None,  # Default set based on screen_type
+                 grid_strength=1.0,
+                 pixelate=True,
+                 output_size=None,  # Defaults to size
+                 color_mode="RGB"
+                 ):
+        self.size = size
+
+        self.screen_type = screen_type
+
+        self.pixel_size = pixel_size
+
+        self.pixel_padding = pixel_padding
+
+        self.direction = direction
+
+        self.blur = blur
+        self.blur_px = round((self.pixel_size  / 2) * blur)
+
+        self.pixel_aspect = pixel_aspect
+
+        self.rounding = rounding
+
+        self.scanline_spacing = scanline_spacing
+
+        self.scanline_size = scanline_size
+
+        self.scanline_blur = scanline_blur
+
+        self.scanline_strength = scanline_strength
+
+        self.grid_strength = grid_strength
+
+        self.pixelate = pixelate
+
+        if output_size is None:
+            self.output_size = self.size
+        else:
+            self.output_size = output_size
+
+        self.color_mode = color_mode
+
+        # Set default scanline_strength based on screen type
+        if self.scanline_strength is None:
+            if self.screen_type in [ScreenType.CRT_TV, ScreenType.CRT_MONITOR]:
+                self.scanline_strength = 1.0
+            else:
+                self.scanline_strength = 0.0
+
+        # Get scanline direction based on screen type
+        if self.screen_type in [ScreenType.CRT_MONITOR]:
+            self.scanline_direction = self.direction
+        else:
+            if self.direction == Direction.HORIZONTAL:
+                self.scanline_direction = Direction.VERTICAL
+            else:
+                self.scanline_direction = Direction.HORIZONTAL
+
+        # Make sure we have required variables for each situation
+        if self.grid_strength > 0:
+            if self.screen_type in [ScreenType.LCD, ScreenType.CRT_TV]:
+                if self.pixel_aspect is None:
+                    raise ValueError("This screen type requires the argument pixel_aspect")
+                if self.rounding is None:
+                    raise ValueError("This screen type requires the argument rounding")
+
+        if self.scanline_strength > 0:
+            if self.scanline_spacing is None:
+                raise ValueError("Scanlines are enabled, requires the argument scanline_spacing")
+            if self.scanline_size is None:
+                raise ValueError("Scanlines are enabled, requires the argument scanline_size")
+            if self.scanline_blur is None:
+                raise ValueError("Scanlines are enabled, requires the argument scanline_blur")
+
+        if self.pixelate:
+            if self.pixel_aspect is None:
+                raise ValueError("Pixelate enabled, requires the argument pixel_aspect")
+
+        # Make the scanline filter object (if needed)
+        if self.scanline_strength > 0:
+            self.scanline_filter = ScanlineFilter(
+                size=self.output_size,
+                line_spacing=self.scanline_spacing,
+                line_size=self.scanline_size,
+                line_blur=self.scanline_blur,
+                direction=self.scanline_direction,
+                strength=self.scanline_strength,
+                color_mode=self.color_mode
+            )
+        else:
+            self.scanline_filter = None
+
+        # Make the screen filter object (if needed)
+        if self.grid_strength > 0:
+            self.screen_filter = ScreenFilter(
+                size=self.output_size,
+                screen_type=self.screen_type,
+                pixel_size=self.pixel_size,
+                pixel_padding=self.pixel_padding,
+                direction=self.direction,
+                pixel_aspect=self.pixel_aspect,
+                rounding=self.rounding,
+                strength=self.grid_strength,
+                color_mode=self.color_mode
+            )
+        else:
+            self.screen_filter = None
+
+    # Apply the filter to a desired image
+    def apply(self, image):
+        if image.size != self.size:
+            raise ValueError(f"Input image size \"{image.size}\" "
+                             f"does not match filter size \"{self.size}\"")
+        if image.mode != self.color_mode:
+            raise ValueError(f"Input image color mode \"{image.mode}\" "
+                             f"does not match filter color mode \"{self.color_mode}\"")
+
+        # Pixelate / scale to final size
+        if self.pixelate:
+            result = pixelate_image(
+                image=image,
+                pixel_size=self.pixel_size,
+                pixel_aspect=self.pixel_aspect,
+                direction=self.direction,
+                output_size=self.output_size
+            )
+        else:
+            if image.size != self.output_size:
+                result = image.resize(self.output_size, resample=Image.Resampling.NEAREST)
+            else:
+                result = image.copy()
+
+        # Blur, if relevant
+        if self.blur > 0:
+            result = result.filter(ImageFilter.GaussianBlur(self.blur_px))
+
+        # Add scanlines if applicable
+        if self.scanline_filter is not None:
+            result = self.scanline_filter.apply(result)
+
+        # Add pixel grid if applicable
+        if self.screen_filter is not None:
+            result = self.screen_filter.apply(result)
+
+        return result
