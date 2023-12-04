@@ -1,6 +1,7 @@
 import math
 from PIL import Image, ImageDraw
 
+import helpers
 from constants import Direction, ScreenType
 
 
@@ -156,3 +157,165 @@ def crt_tv(size, aspect, padding, rounding, direction):
         both_pixels.paste(single_pixel, (split_x - single_pixel.width, single_pixel.height))
 
     return both_pixels
+
+
+def crt_monitor(size, padding, direction):
+    # Get width and height from dot size (float, used for calculations)
+    if direction == Direction.HORIZONTAL:
+        width = size * 3
+        height = size * math.sqrt(3)
+
+        # Get integer divisions for dot placement
+        height_divs = (
+            0,
+            round(height / 2),
+            round(height)
+        )
+        width_divs = (
+            0,
+            round(width * (1 / 6)),
+            round(width * (2 / 6)),
+            round(width * (3 / 6)),
+            round(width * (4 / 6)),
+            round(width * (5 / 6)),
+            round(width)
+        )
+    else:
+        height = size * 3
+        width = size * math.sqrt(3)
+
+        # Get integer divisions for dot placement
+        height_divs = (
+            0,
+            round(height * (1 / 6)),
+            round(height * (2 / 6)),
+            round(height * (3 / 6)),
+            round(height * (4 / 6)),
+            round(height * (5 / 6)),
+            round(height)
+        )
+        width_divs = (
+            0,
+            round(width / 2),
+            round(width)
+        )
+
+    # Make new black image
+    filter_image = Image.new("RGB", (width_divs[-1], height_divs[-1]), (0, 0, 0))
+
+    # Make drawing object
+    filter_draw = ImageDraw.Draw(filter_image)
+
+    # Clip padding
+    padding = helpers.clip(padding, 0, 1)
+
+    # If padding is  1, know it should be full black, so we should return the black image now
+    if padding == 1:
+        return filter_image
+
+    # Get dot size
+    dot_size = size * (1 - padding)
+
+    # Draw the dots
+    if direction == Direction.HORIZONTAL:
+        # Draw red dots
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[0], height_divs[0]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[6], height_divs[0]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((0, height_divs[2]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[6], height_divs[2]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[3], height_divs[1]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+
+        # Draw green dots
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[0]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[2]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[5], height_divs[1]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+
+        # Draw blue dots
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[1], height_divs[1]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[4], height_divs[0]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[4], height_divs[2]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+    else:
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[0], height_divs[0]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[0]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((0, height_divs[6]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[6]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[1], height_divs[3]), (dot_size, dot_size)),
+            fill=(255, 0, 0)
+        )
+
+        # Draw green dots
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[0], height_divs[2]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[2]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[1], height_divs[5]), (dot_size, dot_size)),
+            fill=(0, 255, 0)
+        )
+
+        # Draw blue dots
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[1], height_divs[1]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[0], height_divs[4]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+        filter_draw.ellipse(
+            helpers.get_centered_dimensions((width_divs[2], height_divs[4]), (dot_size, dot_size)),
+            fill=(0, 0, 255)
+        )
+
+
+    return filter_image

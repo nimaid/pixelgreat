@@ -1,6 +1,6 @@
 import os
 
-# Define commonly used helper functions (mainly for argument parsing)
+# Define commonly used helper functions
 
 
 # General purpose text input stripper
@@ -20,3 +20,17 @@ def file_path(string):
 # A short function to clip a value to a range
 def clip(value, min_value, max_value):
     return min(max(value, min_value), max_value)
+
+
+# A function to give absolute bounding coordinates for a specified center point and object size
+def get_centered_dimensions(center, size):
+    start = (
+        center[0] - (size[0] / 2),
+        center[1] - (size[1] / 2),
+    )
+    end = (
+        center[0] + (size[0] / 2),
+        center[1] + (size[1] / 2),
+    )
+
+    return (start, end)
