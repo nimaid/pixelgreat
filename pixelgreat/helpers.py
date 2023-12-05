@@ -78,7 +78,7 @@ def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
                 if image_tile.size == target_size:
                     this_tile = image_tile
                 else:
-                    this_tile = image_tile.resize(target_size, resample=Image.Resampling.BICUBIC)
+                    this_tile = image_tile.resize(target_size, resample=Image.Resampling.LANCZOS)
 
                 new_image.paste(this_tile, tile_start)
 
