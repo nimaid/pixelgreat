@@ -131,8 +131,8 @@ class MakeManualTestAssets(unittest.TestCase):
 
         # Compute the images
         for px_size in [400, 280, 130, 66, 33, 22, 10, 5, 4, 3]:
-            for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
-                for pixel_aspect in [0.25, 0.5, 0.75, 1.0, 1.5, 2, 4]:
+            for pixel_aspect in [0.25, 0.5, 0.75, 1.0, 1.5, 2, 4]:
+                for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
                     self.make_image(
                         save_location=save_dir,
                         screen_type=filters.ScreenType.CRT_TV,

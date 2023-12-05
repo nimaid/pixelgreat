@@ -581,10 +581,16 @@ class CompositeFilter:
         self.blur = blur
         self.blur_px = round((self.pixel_size / 2) * self.blur)
 
-        self.bloom_size = bloom_size
-        self.bloom_size_px = round((self.pixel_size / 2) * self.bloom_size)
-
         self.pixel_aspect = pixel_aspect
+
+        self.bloom_size = bloom_size
+        # Set actual size based on smallest pixel dimension
+        if self.pixel_aspect < 1.0:
+            # Use pixel size (width)
+            self.bloom_size_px = round((self.pixel_size / 2) * self.bloom_size)
+        else:
+            # Use pixel height
+            self.bloom_size_px = round(((self.pixel_size / self.pixel_aspect) / 2) * self.bloom_size)
 
         self.rounding = rounding
 
