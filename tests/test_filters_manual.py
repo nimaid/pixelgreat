@@ -150,7 +150,7 @@ class MakeManualTestAssets(unittest.TestCase):
                             bloom_strength=1,
                             grid_strength=1,
                             pixelate=True,
-                            output_scale=8
+                            output_scale=4
                         )
 
                         self.make_image(
@@ -170,7 +170,7 @@ class MakeManualTestAssets(unittest.TestCase):
                             bloom_strength=1,
                             grid_strength=1,
                             pixelate=True,
-                            output_scale=8
+                            output_scale=4
                         )
 
                     self.make_image(
@@ -188,7 +188,7 @@ class MakeManualTestAssets(unittest.TestCase):
                         bloom_strength=1,
                         grid_strength=1,
                         pixelate=True,
-                        output_scale=8
+                        output_scale=4
                     )
 
 
