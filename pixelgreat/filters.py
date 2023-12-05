@@ -720,9 +720,9 @@ class CompositeFilter:
             )
         else:
             if image.size != self.output_size:
-                result = image.resize(self.output_size, resample=prepped_image.Resampling.NEAREST)
+                result = image.resize(self.output_size, resample=image.Resampling.NEAREST)
             else:
-                result = prepped_image.copy()
+                result = image.copy()
 
         # Blur, if relevant
         if self.blur > 0:
@@ -738,7 +738,7 @@ class CompositeFilter:
                 result,
                 Image.new(
                     self.color_mode,
-                    self.size,
+                    self.output_size,
                     (self.washout_value, self.washout_value, self.washout_value)
                 )
             )
