@@ -73,7 +73,7 @@ class MakeManualTestAssets(unittest.TestCase):
             output_name += f"_pxs{pixel_size}"
 
         if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
-            output_name += f"_pxa{pixel_aspect}"
+            output_name += f"_pxa{pixel_aspect:.2f}"
 
         if direction == filters.Direction.VERTICAL:
             output_name += "_dV"
@@ -81,37 +81,37 @@ class MakeManualTestAssets(unittest.TestCase):
             output_name += "_dH"
 
         if grid_strength > 0:
-            output_name += f"_pxp{pixel_padding}"
+            output_name += f"_pxp{pixel_padding:.2f}"
 
         if washout > 0:
-            output_name += f"_w{washout}"
+            output_name += f"_w{washout:.2f}"
 
         if blur > 0:
-            output_name += f"_b{blur}"
+            output_name += f"_b{blur:.2f}"
 
         if bloom_size > 0 and bloom_strength > 0:
-            output_name += f"_bs{bloom_size}"
+            output_name += f"_bs{bloom_size:.2f}"
 
         if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
-            output_name += f"_r{rounding}"
+            output_name += f"_r{rounding:.2f}"
 
         if scanline_strength > 0:
-            output_name += f"_ssp{scanline_spacing}"
+            output_name += f"_ssp{scanline_spacing:.2f}"
 
         if scanline_strength > 0:
-            output_name += f"_ssz{scanline_size}"
+            output_name += f"_ssz{scanline_size:.2f}"
 
         if scanline_strength > 0:
-            output_name += f"_sb{scanline_blur}"
+            output_name += f"_sb{scanline_blur:.2f}"
 
         if scanline_strength > 0:
-            output_name += f"_sst{scanline_strength}"
+            output_name += f"_sst{scanline_strength:.2f}"
 
         if bloom_size > 0 and bloom_strength > 0:
-            output_name += f"_bls{bloom_strength}"
+            output_name += f"_bls{bloom_strength:.2f}"
 
         if grid_strength > 0:
-            output_name += f"_gs{grid_strength}"
+            output_name += f"_gs{grid_strength:.2f}"
 
         if pixelate:
             output_name += "_pxt"
