@@ -595,7 +595,13 @@ class CompositeFilter:
         self.rounding = rounding
 
         self.scanline_spacing = scanline_spacing
-        self.scanline_spacing_px = round(self.pixel_size * self.scanline_spacing)
+        # Set actual size based on smallest pixel dimension
+        if self.pixel_aspect < 1.0:
+            # Use pixel size (width)
+            self.scanline_spacing_px = round(self.pixel_size * self.scanline_spacing)
+        else:
+            # Use pixel height
+            self.scanline_spacing_px = round((self.pixel_size / self.pixel_aspect) * self.scanline_spacing)
 
         self.scanline_size = scanline_size
 
