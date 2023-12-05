@@ -86,11 +86,11 @@ def tile_image(image_tile, size, background_color=(0, 0, 0), count=None):
 
 
 # Mix a PIL image with white
-def lighten_image(image, factor):
+def mix_color_with_image(image, color, factor):
     if factor <= 0:
         return image
 
-    white_image = Image.new(image.mode, image.size, (255, 255, 255))
+    white_image = Image.new(image.mode, image.size, color=color)
 
     if factor >= 1:
         return white_image

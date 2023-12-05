@@ -1,8 +1,8 @@
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
-from . import helpers
-from .constants import Direction, ScreenType
+import helpers
+from constants import Direction, ScreenType
 
 
 def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
@@ -306,6 +306,26 @@ def pixelate_image(image,
     return result
 
 
+def bloom_image(image, bloom_size, bloom_strength):
+    if bloom_strength <= 0 or bloom_size <= 0:
+        return image
+
+    # Blur source image
+    bloom = image.filter(ImageFilter.GaussianBlur(bloom_size))
+
+    # Adjust the blurred image
+    bloom = helpers.mix_color_with_image(
+        bloom,
+        (0, 0, 0),
+        1 - bloom_strength
+    )
+
+    # Make final image
+    result = ImageChops.lighter(image, bloom)
+
+    return result
+
+
 # A reusable class to handle applying scanlines
 class ScanlineFilter:
     def __init__(self,
@@ -342,7 +362,11 @@ class ScanlineFilter:
         )
 
         # Pre-computed adjusted filter image
-        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
+        self.filter = helpers.mix_color_with_image(
+            self.filter_raw,
+            (255, 255, 255),
+            1 - self.strength
+        )
 
     # Apply the filter to a desired image
     def apply(self, image):
@@ -457,7 +481,11 @@ class ScreenFilter:
         )
 
         # Pre-computed adjusted filter image
-        self.filter = helpers.lighten_image(self.filter_raw, 1 - self.strength)
+        self.filter = helpers.mix_color_with_image(
+            self.filter_raw,
+            (255, 255, 255),
+            1 - self.strength
+        )
 
     # Apply the filter to a desired image
     def apply(self, image):
@@ -482,12 +510,14 @@ class CompositeFilter:
                  pixel_padding,
                  direction,
                  blur=0.0,
+                 bloom_size=0.0,
                  pixel_aspect=None,
                  rounding=None,
                  scanline_spacing=None,
                  scanline_size=None,
                  scanline_blur=None,
                  scanline_strength=None,  # Default set based on screen_type
+                 bloom_strength=1.0,
                  grid_strength=1.0,
                  pixelate=True,
                  output_size=None,  # Defaults to size
@@ -504,7 +534,10 @@ class CompositeFilter:
         self.direction = direction
 
         self.blur = blur
-        self.blur_px = round((self.pixel_size / 2) * blur)
+        self.blur_px = round((self.pixel_size / 2) * self.blur)
+
+        self.bloom_size = bloom_size
+        self.bloom_size_px = round(self.pixel_size * self.bloom_size)
 
         self.pixel_aspect = pixel_aspect
 
@@ -517,6 +550,13 @@ class CompositeFilter:
         self.scanline_blur = scanline_blur
 
         self.scanline_strength = scanline_strength
+        if self.scanline_strength is None:
+            if self.screen_type in [ScreenType.CRT_TV, ScreenType.CRT_MONITOR]:
+                self.scanline_strength = 1.0
+            else:
+                self.scanline_strength = 0.0
+
+        self.bloom_strength = bloom_strength
 
         self.grid_strength = grid_strength
 
@@ -528,13 +568,6 @@ class CompositeFilter:
             self.output_size = output_size
 
         self.color_mode = color_mode
-
-        # Set default scanline_strength based on screen type
-        if self.scanline_strength is None:
-            if self.screen_type in [ScreenType.CRT_TV, ScreenType.CRT_MONITOR]:
-                self.scanline_strength = 1.0
-            else:
-                self.scanline_strength = 0.0
 
         # Get scanline direction based on screen type
         if self.screen_type in [ScreenType.CRT_MONITOR]:
@@ -629,5 +662,9 @@ class CompositeFilter:
         # Add pixel grid if applicable
         if self.screen_filter is not None:
             result = self.screen_filter.apply(result)
+
+        # Add bloom, if applicable
+        if self.bloom_size_px > 0 and self.bloom_strength > 0:
+            result = bloom_image(result, self.bloom_size_px, self.bloom_strength)
 
         return result
