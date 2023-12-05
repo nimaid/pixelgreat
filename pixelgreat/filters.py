@@ -710,23 +710,10 @@ class CompositeFilter:
             raise ValueError(f"Input image color mode \"{image.mode}\" "
                              f"does not match filter color mode \"{self.color_mode}\"")
 
-        # Apply washout, if needed
-        if self.washout > 0:
-            prepped_image = ImageChops.lighter(
-                image,
-                Image.new(
-                    self.color_mode,
-                    self.size,
-                    (self.washout_value, self.washout_value, self.washout_value)
-                )
-            )
-        else:
-            prepped_image = image
-
-            # Pixelate / scale to final size
+        # Pixelate / scale to final size
         if self.pixelate:
             result = pixelate_image(
-                image=prepped_image,
+                image=image,
                 pixel_size=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
                 output_size=self.output_size
@@ -744,6 +731,17 @@ class CompositeFilter:
         # Add scanlines if applicable
         if self.scanline_filter is not None:
             result = self.scanline_filter.apply(result)
+
+        # Apply washout, if needed
+        if self.washout > 0:
+            result = ImageChops.lighter(
+                result,
+                Image.new(
+                    self.color_mode,
+                    self.size,
+                    (self.washout_value, self.washout_value, self.washout_value)
+                )
+            )
 
         # Add pixel grid if applicable
         if self.screen_filter is not None:
