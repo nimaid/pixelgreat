@@ -4,9 +4,9 @@ import argparse
 from enum import Enum
 from PIL import Image
 
-from constants import Direction, ScreenType, DESCRIPTION
-import helpers
-import filters
+from .constants import Direction, ScreenType, DESCRIPTION
+from . import helpers
+from . import filters
 
 
 # ---- MAIN CLASSES ----

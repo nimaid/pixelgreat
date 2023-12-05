@@ -1,11 +1,12 @@
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
-import helpers
-from constants import Direction, ScreenType
+from . import helpers
+from .constants import Direction, ScreenType
 
 
 def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
+    # TODO: Add "subpixels" param to allow drawing at larger sizes then downscaling
     # Get main pixel dimensions (float, used in calculations)
     if direction == Direction.HORIZONTAL:
         # Adjust aspect for later rotation if needed
@@ -509,6 +510,7 @@ class CompositeFilter:
                  pixel_size,
                  pixel_padding,
                  direction,
+                 washout=0.0,
                  blur=0.0,
                  bloom_size=0.0,
                  pixel_aspect=None,
@@ -533,17 +535,21 @@ class CompositeFilter:
 
         self.direction = direction
 
+        self.washout = washout
+        self.washout_value = round((self.washout * 255) / 10)
+
         self.blur = blur
         self.blur_px = round((self.pixel_size / 2) * self.blur)
 
         self.bloom_size = bloom_size
-        self.bloom_size_px = round(self.pixel_size * self.bloom_size)
+        self.bloom_size_px = round((self.pixel_size / 2) * self.bloom_size)
 
         self.pixel_aspect = pixel_aspect
 
         self.rounding = rounding
 
         self.scanline_spacing = scanline_spacing
+        self.scanline_spacing_px = round(self.pixel_size * self.scanline_spacing)
 
         self.scanline_size = scanline_size
 
@@ -602,7 +608,7 @@ class CompositeFilter:
         if self.scanline_strength > 0:
             self.scanline_filter = ScanlineFilter(
                 size=self.output_size,
-                line_spacing=self.scanline_spacing,
+                line_spacing=self.scanline_spacing_px,
                 line_size=self.scanline_size,
                 line_blur=self.scanline_blur,
                 direction=self.scanline_direction,
@@ -637,19 +643,32 @@ class CompositeFilter:
             raise ValueError(f"Input image color mode \"{image.mode}\" "
                              f"does not match filter color mode \"{self.color_mode}\"")
 
-        # Pixelate / scale to final size
+        # Apply washout, if needed
+        if self.washout > 0:
+            prepped_image = ImageChops.lighter(
+                image,
+                Image.new(
+                    self.color_mode,
+                    self.size,
+                    (self.washout_value, self.washout_value, self.washout_value)
+                )
+            )
+        else:
+            prepped_image = image
+
+            # Pixelate / scale to final size
         if self.pixelate:
             result = pixelate_image(
-                image=image,
+                image=prepped_image,
                 pixel_size=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
                 output_size=self.output_size
             )
         else:
             if image.size != self.output_size:
-                result = image.resize(self.output_size, resample=Image.Resampling.NEAREST)
+                result = image.resize(self.output_size, resample=prepped_image.Resampling.NEAREST)
             else:
-                result = image.copy()
+                result = prepped_image.copy()
 
         # Blur, if relevant
         if self.blur > 0:
