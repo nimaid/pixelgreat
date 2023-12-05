@@ -4,19 +4,28 @@ from PIL import Image, ImageDraw, ImageChops, ImageFilter
 from . import helpers
 from .constants import Direction, ScreenType
 
+# TODO: XO-1 LCD Display
 
-def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
-    # TODO: Add "subpixels" param to allow drawing at larger sizes then downscaling
+
+def lcd(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
     # Get main pixel dimensions (float, used in calculations)
     if direction == Direction.HORIZONTAL:
         # Adjust aspect for later rotation if needed
         aspect = 1 / aspect
 
-        width = size * aspect
-        height = size
+        real_width = size * aspect
+        real_height = size
     else:
-        width = size
-        height = size / aspect
+        real_width = size
+        real_height = size / aspect
+
+    # Get width and height based on subpixels
+    if subpixels > 1:
+        width = real_width * subpixels
+        height = real_height * subpixels
+    else:
+        width = real_width
+        height = real_height
 
     # Get integer values for width and height (the REAL pixel count)
     width_px = round(width)
@@ -92,6 +101,16 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
         filter_draw.rectangle((green_start, green_end), fill=(0, 255, 0))
         filter_draw.rectangle((blue_start, blue_end), fill=(0, 0, 255))
 
+    # Scale down if needed
+    if subpixels > 1:
+        filter_image = filter_image.resize(
+            (
+                round(real_width),
+                round(real_width)
+            ),
+            resample=Image.Resampling.HAMMING
+        )
+
     # Rotate if needed
     if direction == Direction.HORIZONTAL:
         filter_image = filter_image.rotate(270, expand=True)
@@ -99,14 +118,15 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
     return filter_image
 
 
-def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
+def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
     # Get the first half of the filter
     single_pixel = lcd(size=size,
                        padding=padding,
                        direction=direction,
                        aspect=aspect,
                        rounding=rounding,
-                       color_mode=color_mode
+                       color_mode=color_mode,
+                       subpixels=subpixels
                        )
 
     # Figure out the dimensions for the new filter
@@ -134,13 +154,20 @@ def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB"):
     return both_pixels
 
 
-def crt_monitor(size, padding, direction, color_mode="RGB"):
+def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
     # Adjust size to more correctly match real mapping for pixel sizes
     size = (size / math.sqrt(3))
 
     # Get width and height from dot size (float, used for calculations)
-    width = size * 3
-    height = size * math.sqrt(3)
+    real_width = size * 3
+    real_height = size * math.sqrt(3)
+
+    # Get size, width, and height based on subpixels
+    if subpixels > 1:
+        size = size * subpixels
+
+        width = real_width * subpixels
+        height = real_height * subpixels
 
     # Get integer divisions for dot placement
     height_divs = (
@@ -220,6 +247,16 @@ def crt_monitor(size, padding, direction, color_mode="RGB"):
         helpers.get_centered_dimensions((width_divs[4], height_divs[2]), (dot_size, dot_size)),
         fill=(0, 0, 255)
     )
+
+    # Scale down if needed
+    if subpixels > 1:
+        filter_image = filter_image.resize(
+            (
+                round(real_width),
+                round(real_height)
+            ),
+            resample=Image.Resampling.HAMMING
+        )
 
     # Rotate if needed
     if direction == Direction.VERTICAL:
