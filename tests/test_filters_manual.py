@@ -63,22 +63,25 @@ class MakeManualTestAssets(unittest.TestCase):
         output_name = ""
 
         if screen_type == filters.ScreenType.LCD:
-            output_name += "sLCD"
+            output_name += "LCD"
         elif screen_type == filters.ScreenType.CRT_TV:
-            output_name += "sTV"
+            output_name += "TV"
         else:
-            output_name += "sMON"
+            output_name += "MON"
 
         if grid_strength > 0:
             output_name += f"_pxs{pixel_size}"
 
-        if grid_strength > 0:
-            output_name += f"_pxp{pixel_padding}"
+        if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
+            output_name += f"_pxa{pixel_aspect}"
 
         if direction == filters.Direction.VERTICAL:
             output_name += "_dV"
         elif direction == filters.Direction.HORIZONTAL:
             output_name += "_dH"
+
+        if grid_strength > 0:
+            output_name += f"_pxp{pixel_padding}"
 
         if washout > 0:
             output_name += f"_w{washout}"
@@ -88,9 +91,6 @@ class MakeManualTestAssets(unittest.TestCase):
 
         if bloom_size > 0 and bloom_strength > 0:
             output_name += f"_bs{bloom_size}"
-
-        if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
-            output_name += f"_pxa{pixel_aspect}"
 
         if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
             output_name += f"_r{rounding}"
@@ -130,65 +130,67 @@ class MakeManualTestAssets(unittest.TestCase):
         os.mkdir(save_dir)
 
         # Compute the images
-        for px_size in [66, 33, 22, 10]:
-            self.make_image(
-                dir=save_dir,
-                screen_type=filters.ScreenType.CRT_TV,
-                pixel_size=px_size,
-                pixel_padding=0.25,
-                direction=filters.Direction.VERTICAL,
-                washout=0.5,
-                blur=0.5,
-                bloom_size=0.5,
-                pixel_aspect=1.5,
-                rounding=0.5,
-                scanline_spacing=0.87,
-                scanline_size=0.75,
-                scanline_blur=0.25,
-                scanline_strength=1,
-                bloom_strength=1,
-                grid_strength=1,
-                pixelate=True,
-                output_scale=8
-            )
+        for px_size in [400, 280, 130, 66, 33, 22, 10, 5, 4, 3]:
+            for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
+                for pixel_aspect in [0.25, 0.5, 0.75, 1.0, 1.5, 2, 4]:
+                    self.make_image(
+                        dir=save_dir,
+                        screen_type=filters.ScreenType.CRT_TV,
+                        pixel_size=px_size,
+                        pixel_padding=0.25,
+                        direction=direction,
+                        washout=0.5,
+                        blur=0.5,
+                        bloom_size=0.5,
+                        pixel_aspect=pixel_aspect,
+                        rounding=0.5,
+                        scanline_spacing=0.87,
+                        scanline_size=0.75,
+                        scanline_blur=0.25,
+                        scanline_strength=1,
+                        bloom_strength=1,
+                        grid_strength=1,
+                        pixelate=True,
+                        output_scale=8
+                    )
 
-            self.make_image(
-                dir=save_dir,
-                screen_type=filters.ScreenType.CRT_MONITOR,
-                pixel_size=px_size,
-                pixel_padding=0.1,
-                direction=filters.Direction.HORIZONTAL,
-                washout=0.5,
-                blur=0.75,
-                bloom_size=0.5,
-                pixel_aspect=1,
-                scanline_spacing=0.87,
-                scanline_size=0.75,
-                scanline_blur=0.25,
-                scanline_strength=1,
-                bloom_strength=1,
-                grid_strength=1,
-                pixelate=True,
-                output_scale=8
-            )
+                    self.make_image(
+                        dir=save_dir,
+                        screen_type=filters.ScreenType.CRT_MONITOR,
+                        pixel_size=px_size,
+                        pixel_padding=0.1,
+                        direction=direction,
+                        washout=0.5,
+                        blur=0.75,
+                        bloom_size=0.5,
+                        pixel_aspect=pixel_aspect,
+                        scanline_spacing=0.87,
+                        scanline_size=0.75,
+                        scanline_blur=0.25,
+                        scanline_strength=1,
+                        bloom_strength=1,
+                        grid_strength=1,
+                        pixelate=True,
+                        output_scale=8
+                    )
 
-            self.make_image(
-                dir=save_dir,
-                screen_type=filters.ScreenType.LCD,
-                pixel_size=px_size,
-                pixel_padding=0.25,
-                direction=filters.Direction.VERTICAL,
-                washout=0.1,
-                blur=0,
-                bloom_size=0.5,
-                pixel_aspect=1,
-                rounding=0,
-                scanline_strength=0,
-                bloom_strength=1,
-                grid_strength=1,
-                pixelate=True,
-                output_scale=8
-            )
+                    self.make_image(
+                        dir=save_dir,
+                        screen_type=filters.ScreenType.LCD,
+                        pixel_size=px_size,
+                        pixel_padding=0.25,
+                        direction=direction,
+                        washout=0.1,
+                        blur=0,
+                        bloom_size=0.5,
+                        pixel_aspect=pixel_aspect,
+                        rounding=0,
+                        scanline_strength=0,
+                        bloom_strength=1,
+                        grid_strength=1,
+                        pixelate=True,
+                        output_scale=8
+                    )
 
 
 if __name__ == '__main__':
