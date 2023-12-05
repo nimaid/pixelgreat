@@ -168,6 +168,9 @@ def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
 
         width = real_width * subpixels
         height = real_height * subpixels
+    else:
+        width = real_width
+        height = real_height
 
     # Get integer divisions for dot placement
     height_divs = (

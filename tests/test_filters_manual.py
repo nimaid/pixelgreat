@@ -13,7 +13,7 @@ save_dir = os.path.join(tests_dir, "processed_images")
 
 class MakeManualTestAssets(unittest.TestCase):
     def make_image(self,
-                   dir,
+                   save_location,
                    screen_type,
                    pixel_size,
                    pixel_padding,
@@ -119,7 +119,7 @@ class MakeManualTestAssets(unittest.TestCase):
         output_name += ".png"
 
         # Save
-        image.save(os.path.join(dir, output_name))
+        image.save(os.path.join(save_location, output_name))
         print(f"Saved: {output_name}")
 
     def test_make_images(self):
@@ -134,7 +134,7 @@ class MakeManualTestAssets(unittest.TestCase):
             for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
                 for pixel_aspect in [0.25, 0.5, 0.75, 1.0, 1.5, 2, 4]:
                     self.make_image(
-                        dir=save_dir,
+                        save_location=save_dir,
                         screen_type=filters.ScreenType.CRT_TV,
                         pixel_size=px_size,
                         pixel_padding=0.25,
@@ -155,7 +155,7 @@ class MakeManualTestAssets(unittest.TestCase):
                     )
 
                     self.make_image(
-                        dir=save_dir,
+                        save_location=save_dir,
                         screen_type=filters.ScreenType.CRT_MONITOR,
                         pixel_size=px_size,
                         pixel_padding=0.1,
@@ -175,7 +175,7 @@ class MakeManualTestAssets(unittest.TestCase):
                     )
 
                     self.make_image(
-                        dir=save_dir,
+                        save_location=save_dir,
                         screen_type=filters.ScreenType.LCD,
                         pixel_size=px_size,
                         pixel_padding=0.25,
