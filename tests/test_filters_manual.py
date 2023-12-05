@@ -156,7 +156,7 @@ class MakeManualTestAssets(unittest.TestCase):
                 dir=save_dir,
                 screen_type=filters.ScreenType.CRT_MONITOR,
                 pixel_size=px_size,
-                pixel_padding=0.25,
+                pixel_padding=0.1,
                 direction=filters.Direction.HORIZONTAL,
                 washout=0.5,
                 blur=0.75,
