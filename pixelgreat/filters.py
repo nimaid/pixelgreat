@@ -600,6 +600,9 @@ class CompositeFilter:
 
         self.scanline_size = scanline_size
         self.scanline_offset = -self.scanline_size / 2
+        # Adjust for LCD
+        if self.screen_type == ScreenType.LCD:
+            self.scanline_offset += 0.5
 
         self.scanline_spacing = scanline_spacing
         # Set actual size based on the direction
