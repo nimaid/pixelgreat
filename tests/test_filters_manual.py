@@ -131,7 +131,7 @@ class MakeManualTestAssets(unittest.TestCase):
         for px_size in [400, 280, 130, 66, 33, 22, 10, 7, 6, 5, 4, 3]:
             for pixel_aspect in [(1/3), (1/2), 1, 2, 3]:
                 for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
-                    for scanline_spacing in [1.0, 0.87]:
+                    for scanline_spacing in [1.0, 0.79]:
                         self.make_image(
                             save_location=save_dir,
                             screen_type=filters.ScreenType.CRT_TV,
