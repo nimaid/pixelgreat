@@ -7,17 +7,17 @@ from .constants import Direction, ScreenType
 # TODO: XO-1 LCD Display
 
 
-def lcd(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
+def lcd(pixel_width, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
     # Get main pixel dimensions (float, used in calculations)
     if direction == Direction.HORIZONTAL:
         # Adjust aspect for later rotation if needed
         aspect = 1 / aspect
 
-        real_width = size * aspect
-        real_height = size
+        real_width = pixel_width * aspect
+        real_height = pixel_width
     else:
-        real_width = size
-        real_height = size / aspect
+        real_width = pixel_width
+        real_height = pixel_width / aspect
 
     # Get width and height based on subpixels
     if subpixels > 1:
@@ -118,9 +118,9 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=
     return filter_image
 
 
-def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
+def crt_tv(pixel_width, padding, direction, aspect, rounding, color_mode="RGB", subpixels=8):
     # Get the first half of the filter
-    single_pixel = lcd(size=size,
+    single_pixel = lcd(pixel_width=pixel_width,
                        padding=padding,
                        direction=direction,
                        aspect=aspect,
@@ -154,17 +154,17 @@ def crt_tv(size, padding, direction, aspect, rounding, color_mode="RGB", subpixe
     return both_pixels
 
 
-def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
+def crt_monitor(pixel_width, padding, direction, color_mode="RGB", subpixels=8):
     # Adjust size to more correctly match real mapping for pixel sizes
-    size = (size / math.sqrt(3))
+    pixel_width = (pixel_width / math.sqrt(3))
 
     # Get width and height from dot size (float, used for calculations)
-    real_width = size * 3
-    real_height = size * math.sqrt(3)
+    real_width = pixel_width * 3
+    real_height = pixel_width * math.sqrt(3)
 
     # Get size, width, and height based on subpixels
     if subpixels > 1:
-        size = size * subpixels
+        pixel_width = pixel_width * subpixels
 
         width = real_width * subpixels
         height = real_height * subpixels
@@ -199,7 +199,7 @@ def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
         return filter_image
 
     # Get dot size
-    dot_size = size * (1 - padding)
+    dot_size = pixel_width * (1 - padding)
 
     # Draw red dots
     filter_draw.ellipse(
@@ -324,7 +324,7 @@ def get_approximate_pixel_count(size, pixel_width, pixel_aspect, make_int=True):
 
 
 def pixelate_image(image,
-                   pixel_size,
+                   pixel_width,
                    pixel_aspect,
                    output_size=None,  # Defaults to the input image size
                    downscale_mode=Image.Resampling.HAMMING
@@ -334,7 +334,7 @@ def pixelate_image(image,
 
     pixels_wide, pixels_tall = get_approximate_pixel_count(
         size=output_size,
-        pixel_width=pixel_size,
+        pixel_width=pixel_width,
         pixel_aspect=pixel_aspect
     )
 
@@ -432,7 +432,7 @@ class ScreenFilter:
     def __init__(self,
                  size,
                  screen_type,
-                 pixel_size,
+                 pixel_width,
                  pixel_padding,
                  direction,
                  pixel_aspect=None,
@@ -444,7 +444,7 @@ class ScreenFilter:
 
         self.screen_type = screen_type
 
-        self.pixel_size = pixel_size
+        self.pixel_width = pixel_width
 
         self.pixel_padding = pixel_padding
 
@@ -458,14 +458,14 @@ class ScreenFilter:
         # Get the filter tile image
         if self.screen_type == ScreenType.CRT_MONITOR:
             self.filter_tile = crt_monitor(
-                size=self.pixel_size,
+                pixel_width=self.pixel_width,
                 padding=self.pixel_padding,
                 direction=self.direction,
                 color_mode=self.color_mode
             )
         elif self.screen_type == ScreenType.CRT_TV:
             self.filter_tile = crt_tv(
-                size=self.pixel_size,
+                pixel_width=self.pixel_width,
                 padding=self.pixel_padding,
                 direction=self.direction,
                 aspect=self.pixel_aspect,
@@ -474,7 +474,7 @@ class ScreenFilter:
             )
         else:  # Default to LCD
             self.filter_tile = lcd(
-                size=self.pixel_size,
+                pixel_width=self.pixel_width,
                 padding=self.pixel_padding,
                 direction=self.direction,
                 aspect=self.pixel_aspect,
@@ -492,7 +492,7 @@ class ScreenFilter:
         elif self.screen_type == ScreenType.CRT_TV:
             # 2:1 inherent ratio, changes with pixel_aspect
             self.pixel_count = get_approximate_pixel_count(
-                pixel_width=self.pixel_size,
+                pixel_width=self.pixel_width,
                 pixel_aspect=self.pixel_aspect,
                 size=self.size,
                 make_int=False
@@ -512,7 +512,7 @@ class ScreenFilter:
         else:  # Default to LCD
             # 1:1 inherent ratio, changes with pixel_aspect
             self.pixel_count = get_approximate_pixel_count(
-                pixel_width=self.pixel_size,
+                pixel_width=self.pixel_width,
                 pixel_aspect=self.pixel_aspect,
                 size=self.size
             )
@@ -690,7 +690,7 @@ class CompositeFilter:
             self.screen_filter = ScreenFilter(
                 size=self.output_size,
                 screen_type=self.screen_type,
-                pixel_size=self.pixel_size,
+                pixel_width=self.pixel_size,
                 pixel_padding=self.pixel_padding,
                 direction=self.direction,
                 pixel_aspect=self.pixel_aspect,
@@ -714,7 +714,7 @@ class CompositeFilter:
         if self.pixelate:
             result = pixelate_image(
                 image=image,
-                pixel_size=self.pixel_size,
+                pixel_width=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
                 output_size=self.output_size
             )
