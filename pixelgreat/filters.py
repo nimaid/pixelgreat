@@ -268,7 +268,7 @@ def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
     return filter_image
 
 
-def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
+def scanlines(size, spacing, offset, line_size, blur, direction, color_mode="RGB"):
     # Create new black image for building the scanline filter
     scanline_image = Image.new(color_mode, size, color=(0, 0, 0))
 
@@ -286,14 +286,14 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
     if direction == Direction.HORIZONTAL:
         line_count = math.ceil(scanline_image.height / spacing)
         for line in range(line_count):
-            line_start_y = round(line * spacing)
+            line_start_y = round((line * spacing) + (offset * spacing))
             line_end_y = line_start_y + line_width
 
             scanline_draw.rectangle(((0, line_start_y), (scanline_image.width, line_end_y)), fill=(255, 255, 255))
     else:
         line_count = math.ceil(scanline_image.width / spacing)
         for line in range(line_count):
-            line_start_x = round(line * spacing)
+            line_start_x = round((line * spacing) + (offset * spacing))
             line_end_x = line_start_x + line_width
 
             scanline_draw.rectangle(((line_start_x, 0), (line_end_x, scanline_image.height)), fill=(255, 255, 255))
@@ -372,6 +372,7 @@ class ScanlineFilter:
     def __init__(self,
                  size,
                  line_spacing,
+                 line_offset,
                  line_size,
                  line_blur,
                  direction,
@@ -381,6 +382,8 @@ class ScanlineFilter:
         self.size = size
 
         self.line_spacing = line_spacing
+
+        self.line_offset = line_offset
 
         self.line_size = line_size
 
@@ -396,6 +399,7 @@ class ScanlineFilter:
         self.filter_raw = scanlines(
             size=self.size,
             spacing=self.line_spacing,
+            offset=self.line_offset,
             line_size=self.line_size,
             blur=self.line_blur,
             direction=self.direction,
@@ -594,16 +598,23 @@ class CompositeFilter:
 
         self.rounding = rounding
 
+        self.scanline_size = scanline_size
+        self.scanline_offset = -self.scanline_size / 2
+
         self.scanline_spacing = scanline_spacing
-        # Set actual size based on smallest pixel dimension
-        if self.pixel_aspect < 1.0:
+        # Set actual size based on the direction
+        if self.screen_type == ScreenType.CRT_MONITOR:
+            # Adjust the spacing for the hexagonal grid used in the CRT Monitor effect
+            self.scanline_spacing_px = round((self.pixel_size * self.scanline_spacing) / 2)
+        elif self.direction == Direction.HORIZONTAL:
             # Use pixel size (width)
             self.scanline_spacing_px = round(self.pixel_size * self.scanline_spacing)
         else:
             # Use pixel height
             self.scanline_spacing_px = round((self.pixel_size / self.pixel_aspect) * self.scanline_spacing)
-
-        self.scanline_size = scanline_size
+        # Adjust for the CRT TV
+        if self.screen_type == ScreenType.CRT_TV:
+            self.scanline_spacing_px = round(self.scanline_spacing_px / 2)
 
         self.scanline_blur = scanline_blur
 
@@ -661,6 +672,7 @@ class CompositeFilter:
             self.scanline_filter = ScanlineFilter(
                 size=self.output_size,
                 line_spacing=self.scanline_spacing_px,
+                line_offset=self.scanline_offset,
                 line_size=self.scanline_size,
                 line_blur=self.scanline_blur,
                 direction=self.scanline_direction,

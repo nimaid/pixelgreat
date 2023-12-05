@@ -69,16 +69,17 @@ class MakeManualTestAssets(unittest.TestCase):
         else:
             output_name += "MON"
 
-        if grid_strength > 0:
-            output_name += f"_pxs{pixel_size}"
+        output_name += f"_pxs{pixel_size}"
 
-        if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
-            output_name += f"_pxa{pixel_aspect:.2f}"
+        output_name += f"_pxa{pixel_aspect:.2f}"
 
         if direction == filters.Direction.VERTICAL:
             output_name += "_dV"
         elif direction == filters.Direction.HORIZONTAL:
             output_name += "_dH"
+
+        if scanline_strength > 0:
+            output_name += f"_ssp{scanline_spacing:.2f}"
 
         if grid_strength > 0:
             output_name += f"_pxp{pixel_padding:.2f}"
@@ -94,9 +95,6 @@ class MakeManualTestAssets(unittest.TestCase):
 
         if screen_type in [filters.ScreenType.LCD, filters.ScreenType.CRT_TV]:
             output_name += f"_r{rounding:.2f}"
-
-        if scanline_strength > 0:
-            output_name += f"_ssp{scanline_spacing:.2f}"
 
         if scanline_strength > 0:
             output_name += f"_ssz{scanline_size:.2f}"
@@ -133,46 +131,47 @@ class MakeManualTestAssets(unittest.TestCase):
         for px_size in [400, 280, 130, 66, 33, 22, 10, 7, 6, 5, 4, 3]:
             for pixel_aspect in [(1/3), (1/2), 1, 2, 3]:
                 for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
-                    self.make_image(
-                        save_location=save_dir,
-                        screen_type=filters.ScreenType.CRT_TV,
-                        pixel_size=px_size,
-                        pixel_padding=0.25,
-                        direction=direction,
-                        washout=0.5,
-                        blur=0.5,
-                        bloom_size=0.5,
-                        pixel_aspect=pixel_aspect,
-                        rounding=0.5,
-                        scanline_spacing=0.87,
-                        scanline_size=0.75,
-                        scanline_blur=0.25,
-                        scanline_strength=1,
-                        bloom_strength=1,
-                        grid_strength=1,
-                        pixelate=True,
-                        output_scale=8
-                    )
+                    for scanline_spacing in [1.0, 0.87]:
+                        self.make_image(
+                            save_location=save_dir,
+                            screen_type=filters.ScreenType.CRT_TV,
+                            pixel_size=px_size,
+                            pixel_padding=0.25,
+                            direction=direction,
+                            washout=0.5,
+                            blur=0.5,
+                            bloom_size=0.5,
+                            pixel_aspect=pixel_aspect,
+                            rounding=0.5,
+                            scanline_spacing=scanline_spacing,
+                            scanline_size=0.75,
+                            scanline_blur=0.25,
+                            scanline_strength=1,
+                            bloom_strength=1,
+                            grid_strength=1,
+                            pixelate=True,
+                            output_scale=8
+                        )
 
-                    self.make_image(
-                        save_location=save_dir,
-                        screen_type=filters.ScreenType.CRT_MONITOR,
-                        pixel_size=px_size,
-                        pixel_padding=0.1,
-                        direction=direction,
-                        washout=0.5,
-                        blur=0.75,
-                        bloom_size=0.5,
-                        pixel_aspect=pixel_aspect,
-                        scanline_spacing=0.87,
-                        scanline_size=0.75,
-                        scanline_blur=0.25,
-                        scanline_strength=1,
-                        bloom_strength=1,
-                        grid_strength=1,
-                        pixelate=True,
-                        output_scale=8
-                    )
+                        self.make_image(
+                            save_location=save_dir,
+                            screen_type=filters.ScreenType.CRT_MONITOR,
+                            pixel_size=px_size,
+                            pixel_padding=0.1,
+                            direction=direction,
+                            washout=0.5,
+                            blur=0.75,
+                            bloom_size=0.5,
+                            pixel_aspect=pixel_aspect,
+                            scanline_spacing=scanline_spacing,
+                            scanline_size=0.75,
+                            scanline_blur=0.25,
+                            scanline_strength=1,
+                            bloom_strength=1,
+                            grid_strength=1,
+                            pixelate=True,
+                            output_scale=8
+                        )
 
                     self.make_image(
                         save_location=save_dir,
