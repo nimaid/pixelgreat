@@ -381,7 +381,7 @@ class ScanlineFilter:
                  ):
         self.size = size
 
-        self.line_spacing = line_spacing
+        self.line_spacing = max(line_spacing, 1)
 
         self.line_offset = line_offset
 

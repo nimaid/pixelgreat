@@ -128,7 +128,7 @@ class MakeManualTestAssets(unittest.TestCase):
         os.mkdir(save_dir)
 
         # Compute the images
-        for px_size in [400, 280, 130, 66, 33, 22, 10, 7, 6, 5, 4, 3]:
+        for px_size in [130, 66, 33, 22, 10, 7, 6, 5, 4, 3]:
             for pixel_aspect in [(1/3), (1/2), 1, 2, 3]:
                 for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
                     for scanline_spacing in [1.0, 0.79]:
