@@ -108,7 +108,7 @@ def lcd(size, padding, direction, aspect, rounding, color_mode="RGB", subpixels=
                 round(real_width),
                 round(real_width)
             ),
-            resample=Image.Resampling.HAMMING
+            resample=Image.Resampling.LANCZOS
         )
 
     # Rotate if needed
@@ -255,7 +255,7 @@ def crt_monitor(size, padding, direction, color_mode="RGB", subpixels=8):
                 round(real_width),
                 round(real_height)
             ),
-            resample=Image.Resampling.HAMMING
+            resample=Image.Resampling.LANCZOS
         )
 
     # Rotate if needed
