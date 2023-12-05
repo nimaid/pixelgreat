@@ -1,8 +1,8 @@
 import math
 from PIL import Image, ImageDraw, ImageChops, ImageFilter
 
-import helpers
-from constants import Direction, ScreenType
+from . import helpers
+from .constants import Direction, ScreenType
 
 
 def lcd(size, padding, direction, aspect, rounding, color_mode="RGB"):
@@ -266,7 +266,7 @@ def scanlines(size, spacing, line_size, blur, direction, color_mode="RGB"):
 
 
 # Calculate approximate pixel count to match target pixel size
-def get_approximate_pixel_count(size, pixel_width, pixel_aspect, direction, make_int=True):
+def get_approximate_pixel_count(size, pixel_width, pixel_aspect, make_int=True):
     # Calculate pixel height
     pixel_height = pixel_width / pixel_aspect
 
@@ -285,7 +285,6 @@ def get_approximate_pixel_count(size, pixel_width, pixel_aspect, direction, make
 def pixelate_image(image,
                    pixel_size,
                    pixel_aspect,
-                   direction,
                    output_size=None,  # Defaults to the input image size
                    downscale_mode=Image.Resampling.HAMMING
                    ):
@@ -295,8 +294,7 @@ def pixelate_image(image,
     pixels_wide, pixels_tall = get_approximate_pixel_count(
         size=output_size,
         pixel_width=pixel_size,
-        pixel_aspect=pixel_aspect,
-        direction=direction
+        pixel_aspect=pixel_aspect
     )
 
     # Downscale image
@@ -428,7 +426,6 @@ class ScreenFilter:
                 pixel_width=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
                 size=self.size,
-                direction=self.direction,
                 make_int=False
             )
 
@@ -448,8 +445,7 @@ class ScreenFilter:
             self.pixel_count = get_approximate_pixel_count(
                 pixel_width=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
-                size=self.size,
-                direction=self.direction
+                size=self.size
             )
 
         # Pre-compute a tiled filter image
@@ -508,7 +504,7 @@ class CompositeFilter:
         self.direction = direction
 
         self.blur = blur
-        self.blur_px = round((self.pixel_size  / 2) * blur)
+        self.blur_px = round((self.pixel_size / 2) * blur)
 
         self.pixel_aspect = pixel_aspect
 
@@ -614,8 +610,7 @@ class CompositeFilter:
                 image=image,
                 pixel_size=self.pixel_size,
                 pixel_aspect=self.pixel_aspect,
-                output_size=self.output_size,
-                direction=self.direction,
+                output_size=self.output_size
             )
         else:
             if image.size != self.output_size:
