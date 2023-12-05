@@ -98,3 +98,25 @@ def mix_color_with_image(image, color, factor):
     new_image = Image.blend(image, white_image, factor)
 
     return new_image
+
+
+# If a value is out of range, raise an exception
+def assert_value_in_range(value, minimum=None, maximum=None, message=None):
+    raise_error = False
+    if minimum is not None:
+        if value < minimum:
+            raise_error = True
+    if maximum is not None:
+        if value > maximum:
+            raise_error = True
+
+    if raise_error:
+        if message is None:
+            if minimum is not None and maximum is not None:
+                raise ValueError(f"Expected a value between {minimum} and {maximum}, got {value}")
+            elif minimum is not None:
+                raise ValueError(f"Expected a value no less than {minimum}, got {value}")
+            elif maximum is not None:
+                raise ValueError(f"Expected a value no more than {maximum}, got {value}")
+        else:
+            raise ValueError(message.format(min=minimum, max=maximum, val=value))
