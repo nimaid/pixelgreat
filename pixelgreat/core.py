@@ -1,11 +1,9 @@
-import os
 import sys
 import argparse
 import warnings
-from enum import Enum
 from PIL import Image
 
-from .constants import Direction, ScreenType, DESCRIPTION, DEFAULTS
+from .constants import ScreenType, DESCRIPTION, DEFAULTS
 from . import helpers
 from . import filters
 
@@ -15,7 +13,7 @@ from . import filters
 # The main reusable class that safely bridges user interaction with the filters
 class Pixelgreat:
     def __init__(self,
-                 size,
+                 output_size,
                  pixel_size,
                  screen_type=None,  # Set to a static default
                  pixel_padding=None,  # Set default based on screen type
@@ -32,21 +30,20 @@ class Pixelgreat:
                  bloom_strength=None,  # Set to a static default
                  grid_strength=None,  # Set to a static default
                  pixelate=None,  # Set to a static default
-                 output_scale=None,  # Set to a static default
                  color_mode=None  # Set to a static default
                  ):
         # Get basic settings used for all filters
         helpers.assert_value_in_range(
-            size[0],
+            output_size[0],
             minimum=3,
-            message="Width must be between {min} and {max} (got {val})"
+            message="Output width must be no less than {min} (got {val})"
         )
         helpers.assert_value_in_range(
-            size[1],
+            output_size[1],
             minimum=3,
-            message="Height must be between {min} and {max} (got {val})"
+            message="Output height must be no less than {min} (got {val})"
         )
-        self.size = size
+        self.output_size = output_size
 
         helpers.assert_value_in_range(
             pixel_size,
@@ -236,18 +233,6 @@ class Pixelgreat:
             raise ValueError("The pixelate argument must be a valid boolean value")
         self.pixelate = pixelate
 
-        if output_scale is None:
-            output_scale = DEFAULTS["output_scale"]
-        helpers.assert_value_in_range(
-            output_scale,
-            minimum=0.1,
-            message="Output scale must be no less than {min} (got {val})"
-        )
-        self.output_size = (
-                round(self.size[0] * output_scale),
-                round(self.size[1] * output_scale)
-        )
-
         if color_mode is None:
             color_mode = "RGB"
         color_mode = color_mode.upper()
@@ -267,7 +252,6 @@ class Pixelgreat:
 
         # Create the composite filter object with the selected settings
         self.filter = filters.CompositeFilter(
-            size=self.size,
             screen_type=self.screen_type,
             pixel_width=self.pixel_width,
             pixel_padding=self.pixel_padding,
@@ -289,9 +273,16 @@ class Pixelgreat:
         )
 
     def apply(self, image):
-        result = self.filter.apply(image)
+        return self.filter.apply(image)
 
-        return result
+    def get_grid_filter(self, adjusted=False):
+        return self.filter.get_grid_filter(adjusted=adjusted)
+
+    def get_grid_filter_tile(self):
+        return self.filter.get_grid_filter_tile()
+
+    def get_scanline_filter(self, adjusted=False):
+        return self.filter.get_scanline_filter(adjusted=adjusted)
 
 
 # A single use helper function
@@ -312,10 +303,9 @@ def pixelgreat(image,
                bloom_strength=None,
                grid_strength=None,
                pixelate=None,
-               output_scale=None
                ):
     pg_object = Pixelgreat(
-        size=image.size,
+        output_size=image.size,
         pixel_size=pixel_size,
         screen_type=screen_type,
         pixel_padding=pixel_padding,
@@ -332,7 +322,6 @@ def pixelgreat(image,
         bloom_strength=bloom_strength,
         grid_strength=grid_strength,
         pixelate=pixelate,
-        output_scale=output_scale,
         color_mode=image.mode
     )
 

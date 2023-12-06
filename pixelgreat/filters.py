@@ -426,6 +426,9 @@ class ScanlineFilter:
 
         return result
 
+    def get_filter(self, adjusted=False):
+        return self.filter_raw
+
 
 # A reusable class to handle applying the RGB filter
 class ScreenFilter:
@@ -545,11 +548,20 @@ class ScreenFilter:
 
         return result
 
+    def get_filter(self, adjusted=False):
+        if adjusted:
+            return self.filter
+        else:
+            return self.filter_raw
+
+    def get_filter_tile(self):
+        return self.filter_tile
+
 
 # A reusable class to handle the composite effects
 class CompositeFilter:
     def __init__(self,
-                 size,
+                 output_size,
                  screen_type,
                  pixel_width,
                  pixel_padding,
@@ -566,11 +578,8 @@ class CompositeFilter:
                  bloom_strength=1.0,
                  grid_strength=1.0,
                  pixelate=True,
-                 output_size=None,  # Defaults to size
                  color_mode="RGB"
                  ):
-        self.size = size
-
         self.screen_type = screen_type
 
         self.pixel_width = pixel_width
@@ -634,10 +643,7 @@ class CompositeFilter:
 
         self.pixelate = pixelate
 
-        if output_size is None:
-            self.output_size = self.size
-        else:
-            self.output_size = output_size
+        self.output_size = output_size
 
         self.color_mode = color_mode
 
@@ -703,12 +709,9 @@ class CompositeFilter:
 
     # Apply the filter to a desired image
     def apply(self, image):
-        if image.size != self.size:
-            raise ValueError(f"Input image size \"{image.size}\" "
-                             f"does not match filter size \"{self.size}\"")
+        # Make input image the correct color mode
         if image.mode != self.color_mode:
-            raise ValueError(f"Input image color mode \"{image.mode}\" "
-                             f"does not match filter color mode \"{self.color_mode}\"")
+            image = image.convert(self.color_mode)
 
         # Pixelate / scale to final size
         if self.pixelate:
@@ -752,3 +755,21 @@ class CompositeFilter:
             result = bloom_image(result, self.bloom_size_px, self.bloom_strength)
 
         return result
+
+    def get_grid_filter(self, adjusted=False):
+        if self.screen_filter is not None:
+            return self.screen_filter.get_filter(adjusted=adjusted)
+        else:
+            return None
+
+    def get_grid_filter_tile(self):
+        if self.screen_filter is not None:
+            return self.screen_filter.get_filter_tile()
+        else:
+            return None
+
+    def get_scanline_filter(self, adjusted=False):
+        if self.scanline_filter is not None:
+            return self.scanline_filter.get_filter(adjusted=adjusted)
+        else:
+            return None
