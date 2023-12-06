@@ -10,30 +10,30 @@ from . import helpers
 from . import filters
 
 
-# ---- MAIN CLASSES ----
+# ---- MAIN CLASSES AND FUNCTIONS ----
 
-# The main class that safely bridges user interaction with the filters
+# The main reusable class that safely bridges user interaction with the filters
 class Pixelgreat:
     def __init__(self,
                  size,
                  pixel_size,
-                 screen_type=ScreenType.LCD,
+                 screen_type=None,  # Set to a static default
                  pixel_padding=None,  # Set default based on screen type
                  direction=None,  # Set default based on screen type
                  washout=None,  # Set default based on screen type
                  blur=None,  # Set default based on screen type
-                 bloom_size=0.5,
-                 pixel_aspect=1.0,
+                 bloom_size=None,  # Set to a static default
+                 pixel_aspect=None,  # Set to a static default
                  rounding=None,  # Set default based on screen type
-                 scanline_spacing=0.79,
-                 scanline_size=0.75,
-                 scanline_blur=0.25,
+                 scanline_spacing=None,  # Set to a static default
+                 scanline_size=None,  # Set to a static default
+                 scanline_blur=None,  # Set to a static default
                  scanline_strength=None,  # Set default based on screen type
-                 bloom_strength=1.0,
-                 grid_strength=1.0,
-                 pixelate=True,
-                 output_size=None,  # Defaults to input size
-                 color_mode="RGB"
+                 bloom_strength=None,  # Set to a static default
+                 grid_strength=None,  # Set to a static default
+                 pixelate=None,  # Set to a static default
+                 output_scale=None,  # Set to a static default
+                 color_mode=None  # Set to a static default
                  ):
         # Get basic settings used for all filters
         helpers.assert_value_in_range(
@@ -58,6 +58,8 @@ class Pixelgreat:
                           "Instead of making the pixels smaller, try making the output size larger.")
         self.pixel_size = pixel_size
 
+        if screen_type is None:
+            screen_type = ScreenType.LCD
         if not isinstance(screen_type, ScreenType):
             raise ValueError("The screen_type argument must be a valid ScreenType instance")
         self.screen_type = screen_type
@@ -118,6 +120,8 @@ class Pixelgreat:
             )
             self.blur = blur
 
+        if bloom_size is None:
+            bloom_size = 0.5
         helpers.assert_value_in_range(
             bloom_size,
             minimum=0,
@@ -126,6 +130,8 @@ class Pixelgreat:
         )
         self.bloom_size = bloom_size
 
+        if pixel_aspect is None:
+            pixel_aspect = 1.0
         helpers.assert_value_in_range(
             pixel_aspect,
             minimum=0.33,
@@ -149,6 +155,8 @@ class Pixelgreat:
             )
             self.rounding = rounding
 
+        if scanline_spacing is None:
+            scanline_spacing = 0.79
         helpers.assert_value_in_range(
             scanline_spacing,
             minimum=0.33,
@@ -157,6 +165,8 @@ class Pixelgreat:
         )
         self.scanline_spacing = scanline_spacing
 
+        if scanline_size is None:
+            scanline_size = 0.75
         helpers.assert_value_in_range(
             scanline_size,
             minimum=0,
@@ -165,6 +175,8 @@ class Pixelgreat:
         )
         self.scanline_size = scanline_size
 
+        if scanline_blur is None:
+            scanline_blur = 0.25
         helpers.assert_value_in_range(
             scanline_blur,
             minimum=0,
@@ -188,6 +200,8 @@ class Pixelgreat:
             )
             self.scanline_strength = scanline_strength
 
+        if bloom_strength is None:
+            bloom_strength = 1.0
         helpers.assert_value_in_range(
             bloom_strength,
             minimum=0,
@@ -196,6 +210,8 @@ class Pixelgreat:
         )
         self.bloom_strength = bloom_strength
 
+        if grid_strength is None:
+            grid_strength = 1.0
         helpers.assert_value_in_range(
             grid_strength,
             minimum=0,
@@ -204,26 +220,26 @@ class Pixelgreat:
         )
         self.grid_strength = grid_strength
 
+        if pixelate is None:
+            pixelate = True
         if not isinstance(pixelate, bool):
             raise ValueError("The pixelate argument must be a valid boolean value")
         self.pixelate = pixelate
 
-        if output_size is None:
-            # Defaults to input size
-            self.output_size = self.size
-        else:
-            helpers.assert_value_in_range(
-                output_size[0],
-                minimum=3,
-                message="Output width must be no less than {min} (got {val})"
-            )
-            helpers.assert_value_in_range(
-                output_size[1],
-                minimum=3,
-                message="Output height must be no less than {min} (got {val})"
-            )
-            self.output_size = output_size
+        if output_scale is None:
+            output_scale = 1.0
+        helpers.assert_value_in_range(
+            output_scale,
+            minimum=0.1,
+            message="Output scale must be no less than {min} (got {val})"
+        )
+        self.output_size = (
+                round(self.size[0] * output_scale),
+                round(self.size[1] * output_scale)
+        )
 
+        if color_mode is None:
+            color_mode = "RGB"
         color_mode = color_mode.upper()
         if "R" in color_mode and "G" in color_mode and "B" in color_mode:
             self.color_mode = color_mode
@@ -266,6 +282,53 @@ class Pixelgreat:
         result = self.filter.apply(image)
 
         return result
+
+
+# A single use helper function
+def pixelgreat(image,
+               pixel_size,
+               screen_type=None,
+               pixel_padding=None,
+               direction=None,
+               washout=None,
+               blur=None,
+               bloom_size=None,
+               pixel_aspect=None,
+               rounding=None,
+               scanline_spacing=None,
+               scanline_size=None,
+               scanline_blur=None,
+               scanline_strength=None,
+               bloom_strength=None,
+               grid_strength=None,
+               pixelate=None,
+               output_scale=None
+               ):
+    pg_object = Pixelgreat(
+        size=image.size,
+        pixel_size=pixel_size,
+        screen_type=screen_type,
+        pixel_padding=pixel_padding,
+        direction=direction,
+        washout=washout,
+        blur=blur,
+        bloom_size=bloom_size,
+        pixel_aspect=pixel_aspect,
+        rounding=rounding,
+        scanline_spacing=scanline_spacing,
+        scanline_size=scanline_size,
+        scanline_blur=scanline_blur,
+        scanline_strength=scanline_strength,
+        bloom_strength=bloom_strength,
+        grid_strength=grid_strength,
+        pixelate=pixelate,
+        output_scale=output_scale,
+        color_mode=image.mode
+    )
+
+    result = pg_object.apply(image)
+
+    return result
 
 # ---- PROGRAM EXECUTION ----
 
