@@ -336,7 +336,7 @@ def pixelgreat(image,
 # Parse arguments
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        description=f"{DESCRIPTION}\n\nDefault parameters are shown in [brackets].",
+        description=f"{DESCRIPTION}\n\nValid values are shown in {{braces}}\n.Default parameters are shown in [brackets].",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 

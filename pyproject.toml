@@ -1,8 +1,23 @@
 [project]
 name = "pixelgreat"
-version = "0.0.1"
+version = "0.1.0"
 description = "A hyper-realistic RGB pixel filter"
-authors = ["Ella Jameson <ellagjameson@gmail.com>"]
+license= {file = "LICENSE"}
+authors = [
+    {name = "Ella Jameson", email = "ellagjameson@gmail.com"}
+]
+classifiers = [
+    "Topic :: Artistic Software",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Graphics :: Graphics Conversion"
+]
+dependencies = [
+    "Pillow>10.0"
+]
 
-[project.dependencies]
-Pillow = "^10.0"
+[project.urls]
+homepage = "https://github.com/nimaid/pixelgreat"
+repository = "https://github.com/nimaid/pixelgreat"
+
+[project.scripts]
+pixelgreat = "pixelgreat.core:run"
