@@ -551,7 +551,7 @@ class CompositeFilter:
     def __init__(self,
                  size,
                  screen_type,
-                 pixel_size,
+                 pixel_width,
                  pixel_padding,
                  direction,
                  washout=0.0,
@@ -573,7 +573,7 @@ class CompositeFilter:
 
         self.screen_type = screen_type
 
-        self.pixel_size = pixel_size
+        self.pixel_width = pixel_width
 
         self.pixel_padding = pixel_padding
 
@@ -583,7 +583,7 @@ class CompositeFilter:
         self.washout_value = round((self.washout * 255) / 10)
 
         self.blur = blur
-        self.blur_px = round((self.pixel_size / 2) * self.blur)
+        self.blur_px = round((self.pixel_width / 2) * self.blur)
 
         self.pixel_aspect = pixel_aspect
 
@@ -591,10 +591,10 @@ class CompositeFilter:
         # Set actual size based on smallest pixel dimension
         if self.pixel_aspect < 1.0:
             # Use pixel size (width)
-            self.bloom_size_px = round((self.pixel_size / 2) * self.bloom_size)
+            self.bloom_size_px = round((self.pixel_width / 2) * self.bloom_size)
         else:
             # Use pixel height
-            self.bloom_size_px = round(((self.pixel_size / self.pixel_aspect) / 2) * self.bloom_size)
+            self.bloom_size_px = round(((self.pixel_width / self.pixel_aspect) / 2) * self.bloom_size)
 
         self.rounding = rounding
 
@@ -608,13 +608,13 @@ class CompositeFilter:
         # Set actual size based on the direction
         if self.screen_type == ScreenType.CRT_MONITOR:
             # Adjust the spacing for the hexagonal grid used in the CRT Monitor effect
-            self.scanline_spacing_px = round((self.pixel_size * self.scanline_spacing) / 2)
+            self.scanline_spacing_px = round((self.pixel_width * self.scanline_spacing) / 2)
         elif self.direction == Direction.HORIZONTAL:
             # Use pixel size (width)
-            self.scanline_spacing_px = round(self.pixel_size * self.scanline_spacing)
+            self.scanline_spacing_px = round(self.pixel_width * self.scanline_spacing)
         else:
             # Use pixel height
-            self.scanline_spacing_px = round((self.pixel_size / self.pixel_aspect) * self.scanline_spacing)
+            self.scanline_spacing_px = round((self.pixel_width / self.pixel_aspect) * self.scanline_spacing)
         # Adjust for the CRT TV
         if self.screen_type == ScreenType.CRT_TV:
             self.scanline_spacing_px = round(self.scanline_spacing_px / 2)
@@ -690,7 +690,7 @@ class CompositeFilter:
             self.screen_filter = ScreenFilter(
                 size=self.output_size,
                 screen_type=self.screen_type,
-                pixel_width=self.pixel_size,
+                pixel_width=self.pixel_width,
                 pixel_padding=self.pixel_padding,
                 direction=self.direction,
                 pixel_aspect=self.pixel_aspect,
@@ -714,7 +714,7 @@ class CompositeFilter:
         if self.pixelate:
             result = pixelate_image(
                 image=image,
-                pixel_width=self.pixel_size,
+                pixel_width=self.pixel_width,
                 pixel_aspect=self.pixel_aspect,
                 output_size=self.output_size
             )

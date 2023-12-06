@@ -37,7 +37,7 @@ class MakeManualTestAssets(unittest.TestCase):
         image = filters.CompositeFilter(
             size=test_image.size,
             screen_type=screen_type,
-            pixel_size=pixel_size,
+            pixel_width=pixel_size,
             pixel_padding=pixel_padding,
             direction=direction,
             washout=washout,
@@ -129,9 +129,9 @@ class MakeManualTestAssets(unittest.TestCase):
 
         # Compute the images
         for px_size in [130, 66, 33, 22, 10, 7, 6, 5, 4, 3]:
-            for pixel_aspect in [(1/3), (1/2), 1, 2, 3]:
+            for pixel_aspect in [0.33, 1, 3]:
                 for direction in [filters.Direction.VERTICAL, filters.Direction.HORIZONTAL]:
-                    for scanline_spacing in [1.0, 0.79]:
+                    for scanline_spacing in [0.33, 1.0, 3]:
                         self.make_image(
                             save_location=save_dir,
                             screen_type=filters.ScreenType.CRT_TV,
