@@ -5,7 +5,7 @@ import warnings
 from enum import Enum
 from PIL import Image
 
-from .constants import Direction, ScreenType, DESCRIPTION
+from .constants import Direction, ScreenType, DESCRIPTION, DEFAULTS
 from . import helpers
 from . import filters
 
@@ -59,17 +59,19 @@ class Pixelgreat:
         self.pixel_size = pixel_size
 
         if screen_type is None:
-            screen_type = ScreenType.LCD
+            screen_type = DEFAULTS["screen_type"]
         if not isinstance(screen_type, ScreenType):
             raise ValueError("The screen_type argument must be a valid ScreenType instance")
         self.screen_type = screen_type
 
         if pixel_padding is None:
             # Set default based on screen type
-            if self.screen_type in [ScreenType.LCD, ScreenType.CRT_TV]:
-                self.pixel_padding = 0.25
+            if self.screen_type == ScreenType.LCD:
+                self.pixel_padding = DEFAULTS["pixel_padding"]["LCD"]
+            elif self.screen_type == ScreenType.CRT_TV:
+                self.pixel_padding = DEFAULTS["pixel_padding"]["CRT_TV"]
             else:  # Defaults to CRT monitor
-                self.pixel_padding = 0.1
+                self.pixel_padding = DEFAULTS["pixel_padding"]["CRT_MONITOR"]
         else:
             helpers.assert_value_in_range(
                 pixel_padding,
@@ -81,10 +83,12 @@ class Pixelgreat:
 
         if direction is None:
             # Set default based on screen type
-            if self.screen_type in [ScreenType.LCD, ScreenType.CRT_TV]:
-                self.direction = Direction.VERTICAL
+            if self.screen_type == ScreenType.LCD:
+                self.direction = DEFAULTS["direction"]["LCD"]
+            if self.screen_type == ScreenType.CRT_TV:
+                self.direction = DEFAULTS["direction"]["CRT_TV"]
             else:  # Defaults to CRT monitor
-                self.direction = Direction.HORIZONTAL
+                self.direction = DEFAULTS["direction"]["CRT_MONITOR"]
         else:
             self.direction = direction
 
@@ -121,7 +125,7 @@ class Pixelgreat:
             self.blur = blur
 
         if bloom_size is None:
-            bloom_size = 0.5
+            bloom_size = DEFAULTS["bloom_size"]
         helpers.assert_value_in_range(
             bloom_size,
             minimum=0,
@@ -131,7 +135,7 @@ class Pixelgreat:
         self.bloom_size = bloom_size
 
         if pixel_aspect is None:
-            pixel_aspect = 1.0
+            pixel_aspect = DEFAULTS["pixel_aspect"]
         helpers.assert_value_in_range(
             pixel_aspect,
             minimum=0.33,
@@ -156,7 +160,7 @@ class Pixelgreat:
             self.rounding = rounding
 
         if scanline_spacing is None:
-            scanline_spacing = 0.79
+            scanline_spacing = DEFAULTS["scanline_spacing"]
         helpers.assert_value_in_range(
             scanline_spacing,
             minimum=0.33,
@@ -166,7 +170,7 @@ class Pixelgreat:
         self.scanline_spacing = scanline_spacing
 
         if scanline_size is None:
-            scanline_size = 0.75
+            scanline_size = DEFAULTS["scanline_size"]
         helpers.assert_value_in_range(
             scanline_size,
             minimum=0,
@@ -176,7 +180,7 @@ class Pixelgreat:
         self.scanline_size = scanline_size
 
         if scanline_blur is None:
-            scanline_blur = 0.25
+            scanline_blur = DEFAULTS["scanline_blur"]
         helpers.assert_value_in_range(
             scanline_blur,
             minimum=0,
@@ -201,7 +205,7 @@ class Pixelgreat:
             self.scanline_strength = scanline_strength
 
         if bloom_strength is None:
-            bloom_strength = 1.0
+            bloom_strength = DEFAULTS["bloom_strength"]
         helpers.assert_value_in_range(
             bloom_strength,
             minimum=0,
@@ -211,7 +215,7 @@ class Pixelgreat:
         self.bloom_strength = bloom_strength
 
         if grid_strength is None:
-            grid_strength = 1.0
+            grid_strength = DEFAULTS["grid_strength"]
         helpers.assert_value_in_range(
             grid_strength,
             minimum=0,
@@ -221,13 +225,13 @@ class Pixelgreat:
         self.grid_strength = grid_strength
 
         if pixelate is None:
-            pixelate = True
+            pixelate = DEFAULTS["pixelate"]
         if not isinstance(pixelate, bool):
             raise ValueError("The pixelate argument must be a valid boolean value")
         self.pixelate = pixelate
 
         if output_scale is None:
-            output_scale = 1.0
+            output_scale = DEFAULTS["output_scale"]
         helpers.assert_value_in_range(
             output_scale,
             minimum=0.1,
@@ -336,9 +340,16 @@ def pixelgreat(image,
 # Parse arguments
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        description=f"{DESCRIPTION}\n\nValid values are shown in {{braces}}\n.Default parameters are shown in [brackets].",
+        description=f"{DESCRIPTION}\n\nValid values are shown in {{braces}}\n."
+                    f"Default parameters are shown in [brackets].",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+
+    parser.add_argument("-i", "--input", dest="image", type=helpers.file_path, required=True,
+                        help="the image to convert")
+
+    parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
+                        help="the size of the pixels {3+}")
 
     '''
     parser.add_argument("-1", "--first", dest="first_arg", type=float, required=True,
