@@ -85,7 +85,7 @@ class Pixelgreat:
             # Set default based on screen type
             if self.screen_type == ScreenType.LCD:
                 self.direction = DEFAULTS["direction"]["LCD"]
-            if self.screen_type == ScreenType.CRT_TV:
+            elif self.screen_type == ScreenType.CRT_TV:
                 self.direction = DEFAULTS["direction"]["CRT_TV"]
             else:  # Defaults to CRT monitor
                 self.direction = DEFAULTS["direction"]["CRT_MONITOR"]
@@ -94,10 +94,12 @@ class Pixelgreat:
 
         if washout is None:
             # Set default based on screen type
-            if self.screen_type in [ScreenType.CRT_TV, ScreenType.CRT_MONITOR]:
-                self.washout = 0.5
+            if self.screen_type == ScreenType.CRT_TV:
+                self.washout = DEFAULTS["washout"]["CRT_TV"]
+            elif self.screen_type == ScreenType.CRT_MONITOR:
+                self.washout = DEFAULTS["washout"]["CRT_MONITOR"]
             else:  # Defaults to LCD
-                self.washout = 0.1
+                self.washout = DEFAULTS["washout"]["LCD"]
         else:
             helpers.assert_value_in_range(
                 washout,
@@ -110,11 +112,11 @@ class Pixelgreat:
         if blur is None:
             # Set default based on screen type
             if self.screen_type == ScreenType.CRT_TV:
-                self.blur = 0.5
+                self.blur = DEFAULTS["blur"]["CRT_TV"]
             elif self.screen_type == ScreenType.CRT_MONITOR:
-                self.blur = 0.75
+                self.blur = DEFAULTS["blur"]["CRT_MONITOR"]
             else:  # Defaults to LCD
-                self.blur = 0
+                self.blur = DEFAULTS["blur"]["LCD"]
         else:
             helpers.assert_value_in_range(
                 blur,
@@ -147,9 +149,11 @@ class Pixelgreat:
         if rounding is None:
             # Set default based on screen type
             if self.screen_type == ScreenType.CRT_TV:
-                self.rounding = 0.5
-            else:  # Rounded pixels only apply to the CRT TV
-                self.rounding = 0
+                self.rounding = DEFAULTS["rounding"]["CRT_TV"]
+            elif self.screen_type == ScreenType.CRT_MONITOR:
+                self.rounding = DEFAULTS["rounding"]["CRT_MONITOR"]
+            else:  # Defaults to LCD
+                self.rounding = DEFAULTS["rounding"]["LCD"]
         else:
             helpers.assert_value_in_range(
                 rounding,
@@ -191,10 +195,12 @@ class Pixelgreat:
 
         if scanline_strength is None:
             # Set default based on screen type
-            if self.screen_type in [ScreenType.CRT_TV, ScreenType.CRT_MONITOR]:
-                self.scanline_strength = 1
+            if self.screen_type == ScreenType.CRT_TV:
+                self.scanline_strength = DEFAULTS["scanline_strength"]["CRT_TV"]
+            elif self.screen_type == ScreenType.CRT_MONITOR:
+                self.scanline_strength = DEFAULTS["scanline_strength"]["CRT_MONITOR"]
             else:  # Defaults to LCD
-                self.scanline_strength = 0
+                self.scanline_strength = DEFAULTS["scanline_strength"]["LCD"]
         else:
             helpers.assert_value_in_range(
                 scanline_strength,
@@ -349,7 +355,7 @@ def parse_args(args):
                         help="the image to convert")
 
     parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
-                        help="the size of the pixels {3+}")
+                        help="the size of the pixels {>3}")
 
     '''
     parser.add_argument("-1", "--first", dest="first_arg", type=float, required=True,
@@ -360,13 +366,43 @@ def parse_args(args):
         help="the operation to perform on the arguments, either \"+\", \"-\", \"*\", or \"/\" [+]")
     '''
 
+    '''
+    screen_type = None,
+    pixel_padding = None,
+    direction = None,
+    washout = None,
+    blur = None,
+    bloom_size = None,
+    pixel_aspect = None,
+    rounding = None,
+    scanline_spacing = None,
+    scanline_size = None,
+    scanline_blur = None,
+    scanline_strength = None,
+    bloom_strength = None,
+    grid_strength = None,
+    pixelate = None,
+    output_scale = None
+    '''
+
+
+
+
+
+
+
+
+
+
+
     return parser.parse_args()
 
 
 def main(raw_args):
     args = parse_args(raw_args)
-    # TODO: Add command line functionality
-    print("Hello, world!")
+    image = Image.open(args.image)
+    pixelgreat(image, 20).show()
+
     pass
 
 
