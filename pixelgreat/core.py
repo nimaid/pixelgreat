@@ -1,8 +1,7 @@
 import os
-import sys
 import argparse
 import warnings
-import math
+import time
 from PIL import Image
 
 from .constants import ScreenType, Direction, DESCRIPTION, DEFAULTS, SUPPORTED_EXTENSIONS
@@ -340,7 +339,7 @@ def pixelgreat(image,
 
 
 # Parse arguments for a single image
-def parse_args_single(args):
+def parse_args_single():
     parser = argparse.ArgumentParser(
         description=f"{DESCRIPTION}\n\n"
                     f"Valid values are shown in {{braces}}\n"
@@ -488,12 +487,14 @@ def parse_args_single(args):
 
 
 # Process a single image
-def single(raw_args):
+def single():
     # Parse args
-    args = parse_args_single(raw_args)
+    args = parse_args_single()
 
     # Open source image
     image = Image.open(os.path.realpath(args.image_in))
+
+    start_time = time.time()
 
     # Apply the filter to a single image
     print("Converting image...")
@@ -524,16 +525,14 @@ def single(raw_args):
     os.makedirs(output_dir, exist_ok=True)
     result.save(output_name)
 
-    print(f"Done!\nSaved image: {args.image_out}")
+    end_time = time.time()
+    process_time = round(end_time - start_time, 1)
 
-
-# Wrapper for processing a single image
-def run_single():
-    single(sys.argv[1:])
+    print(f"Done converting 1 image in {process_time} seconds!\nSaved image: {args.image_out}")
 
 
 # Parse arguments for an image sequence
-def parse_args_sequence(args):
+def parse_args_sequence():
     parser = argparse.ArgumentParser(
         description=f"{DESCRIPTION}\n\n"
                     f"Valid values are shown in {{braces}}\n"
@@ -542,16 +541,14 @@ def parse_args_sequence(args):
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    '''
     parser.add_argument("-i", "--input", dest="image_in", type=helpers.file_path, required=True,
-                        help="the image to convert"
+                        help="the image to convert (must be part of a sequence)"
                         )
-    '''
-    '''
+
     parser.add_argument("-o", "--output", dest="image_out", type=str, required=True,
-                        help="where to save the converted image, and what filetype to save it as"
+                        help="where to save the converted image sequence, and what filetype to them it as"
                         )
-    '''
+
     parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
                         help="the size of the pixels {3 - no limit}"
                         )
@@ -670,7 +667,6 @@ def parse_args_sequence(args):
             parser.error(f"\"{parsed_args.direction}\" is not a valid direction")
 
     # Verify the target file extensions are supported
-    '''
     input_name, input_ext = os.path.splitext(parsed_args.image_in)
     input_ext = input_ext.lower()
     if input_ext not in SUPPORTED_EXTENSIONS:
@@ -680,17 +676,92 @@ def parse_args_sequence(args):
     output_ext = output_ext.lower()
     if output_ext not in SUPPORTED_EXTENSIONS:
         parser.error(f"\"{output_ext}\" is not a supported output format")
-    '''
+
+    # Validate the input image actually represents an image sequence
+    if helpers.parse_sequenced_image_name(parsed_args.image_in)["error"] is not None:
+        parser.error("No image sequence found. Ensure they are named like this: name0000.png, name0001.png, etc.")
 
     return parsed_args
 
 
 # Process an image sequence
-def sequence(raw_args):
-    # args = parse_args_sequence(raw_args)
-    print("Image sequences are not yet implemented. Soon.™")
+def sequence():
+    args = parse_args_sequence()
+    print("Preparing to process image sequence...")
 
+    start_time = time.time()
 
-# Wrapper for processing an image sequence
-def run_sequence():
-    sequence(sys.argv[1:])
+    # Get the full image sequence
+    sequence_info = helpers.get_all_images_in_sequence(args.image_in)
+
+    # Get the size and color mode of the first image
+    first_image = Image.open(sequence_info["files"][0])
+    first_image_size = first_image.size
+    first_image_mode = first_image.mode
+    first_image.close()
+
+    # Get the output size
+    output_size = (
+        max(round(first_image_size[0] * args.output_scale), 3),
+        max(round(first_image_size[1] * args.output_scale), 3)
+    )
+
+    # Make the re-usable converter object
+    converter = Pixelgreat(
+        output_size=output_size,
+        pixel_size=args.pixel_size,
+        screen_type=args.screen_type,
+        pixel_padding=args.padding,
+        direction=args.direction,
+        washout=args.washout,
+        blur=args.blur_amount,
+        bloom_size=args.bloom_size,
+        pixel_aspect=args.pixel_aspect,
+        rounding=args.rounding,
+        scanline_spacing=args.scanline_spacing,
+        scanline_size=args.scanline_size,
+        scanline_blur=args.scanline_blur,
+        scanline_strength=args.scanline_strength,
+        bloom_strength=args.bloom_strength,
+        grid_strength=args.grid_strength,
+        pixelate=args.pixelate,
+        color_mode=first_image_mode
+    )
+
+    # Make the destination dir if it doesn't already exist
+    output_dir = os.path.dirname(args.image_out)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Loop through the images
+    image_count = len(sequence_info["files"])
+    for i, image_name in enumerate(sequence_info["files"]):
+        print(f"Converting image {i + 1} of {image_count}...")
+
+        # Open image
+        image_in = Image.open(image_name)
+
+        # Convert the image with the reusable converter
+        image_out = converter.apply(image_in)
+
+        # Get new image filename
+        main_name, ext = os.path.splitext(args.image_out)
+        this_number = str(i).rjust(sequence_info["digits"], "0")
+        output_name = f"{main_name}{this_number}{ext}"
+
+        # Save the image
+        try:
+            image_out.save(output_name)
+        except OSError as e:
+            # Try converting it to RGB first
+            rgb_image_out = image_out.convert("RGB")
+            rgb_image_out.save(output_name)
+            rgb_image_out.close()
+
+        # Close the images
+        image_in.close()
+        image_out.close()
+
+    end_time = time.time()
+    process_time = round(end_time - start_time, 1)
+
+    print(f"Done converting {image_count} images in {process_time} seconds!")

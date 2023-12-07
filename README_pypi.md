@@ -59,8 +59,65 @@ options:
   -bsz BLOOM_SIZE, --bloom-size BLOOM_SIZE
                         the size of the bloom added to the output image {0.0 - 1.0} [0.5]
 ```
+To process an image sequence, use the command `pixelgreat-sequence`
+```
+usage: pixelgreat-sequence [-h] -i IMAGE_IN -o IMAGE_OUT -s PIXEL_SIZE [-os OUTPUT_SCALE]
+                           [-t SCREEN_TYPE] [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-b BLUR_AMOUNT]
+                           [-w WASHOUT] [-sst SCANLINE_STRENGTH] [-ssp SCANLINE_SPACING]
+                           [-ssz SCANLINE_SIZE] [-sb SCANLINE_BLUR] [-gst GRID_STRENGTH]
+                           [-p PADDING] [-r ROUNDING] [-bst BLOOM_STRENGTH] [-bsz BLOOM_SIZE]
 
-Currently, there is no support for image sequences through the command line. However, this feature is planned.
+A highly realistic RGB pixel filter
+
+Valid values are shown in {braces}
+Default values are shown in [brackets]
+
+For image sequences, the output size is based on the first image in the sequence
+
+options:
+  -h, --help            show this help message and exit
+  -i IMAGE_IN, --input IMAGE_IN
+                        the image to convert (must be part of a sequence)
+  -o IMAGE_OUT, --output IMAGE_OUT
+                        where to save the converted image sequence, and what filetype to them it as
+  -s PIXEL_SIZE, --size PIXEL_SIZE
+                        the size of the pixels {3 - no limit}
+  -os OUTPUT_SCALE, --output-scale OUTPUT_SCALE
+                        How much to scale the output size by {no limits, 1.0 is no scaling, 2.0 is
+                        2x size} [1.0]
+  -t SCREEN_TYPE, --type SCREEN_TYPE
+                        the type of RGB filter to apply {LCD, CRT_TV, CRT_MONITOR} [LCD]
+  -d DIRECTION, --direction DIRECTION
+                        the direction of the RGB filter {V, H} [varies w/ screen type]
+  -a PIXEL_ASPECT, --aspect PIXEL_ASPECT
+                        the aspect ratio of the pixels, width / height {0.33 - 3.0} [1.0]
+  -npx, --no-pixelate   if given, the image will not be pixelated, but the other filters will still
+                        be applied
+  -b BLUR_AMOUNT, --blur BLUR_AMOUNT
+                        how much to blur the source image {0.0 - 1.0} [varies w/ screen type]
+  -w WASHOUT, --washout WASHOUT
+                        how much to brighten dark pixels {0.0 - 1.0} [varies w/ screen type]
+  -sst SCANLINE_STRENGTH, --scanline-strength SCANLINE_STRENGTH
+                        the strength of the CRT scanline filter {0.0 - 1.0} [varies w/ screen type]
+  -ssp SCANLINE_SPACING, --scanline-spacing SCANLINE_SPACING
+                        how far apart to space the CRT scanlines {0.33 - 3.0} [0.79]
+  -ssz SCANLINE_SIZE, --scanline-size SCANLINE_SIZE
+                        how wide the CRT scanlines are {0.0 - 1.0} [0.75]
+  -sb SCANLINE_BLUR, --scanline-blur SCANLINE_BLUR
+                        how much blur to apply to the CRT scanline filter {0.0 - 1.0} [0.25]
+  -gst GRID_STRENGTH, --grid-strength GRID_STRENGTH
+                        the strength of the RGB pixel grid filter {0.0 - 1.0} [1.0]
+  -p PADDING, --padding PADDING
+                        how much black padding to add around the pixels {0.0 - 1.0} [varies w/
+                        screen type]
+  -r ROUNDING, --rounding ROUNDING
+                        how much to round the corners of the pixels {0.0 - 1.0} [varies w/ screen
+                        type]
+  -bst BLOOM_STRENGTH, --bloom-strength BLOOM_STRENGTH
+                        the amount of bloom to add to the output image {0.0 - 1.0} [1.0]
+  -bsz BLOOM_SIZE, --bloom-size BLOOM_SIZE
+                        the size of the bloom added to the output image {0.0 - 1.0} [0.5]
+```
 
 ## Usage In Custom Code
 

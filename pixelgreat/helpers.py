@@ -1,5 +1,6 @@
 import os
 import math
+import glob
 from PIL import Image
 
 
@@ -120,3 +121,39 @@ def assert_value_in_range(value, minimum=None, maximum=None, message=None):
                 raise ValueError(f"Expected a value no more than {maximum}, got {value}")
         else:
             raise ValueError(message.format(min=minimum, max=maximum, val=value))
+
+
+# Helper function to get info from a sequenced image filename
+def parse_sequenced_image_name(image_file):
+    main_path, image_filename = os.path.split(image_file)
+    file_basename, ext = os.path.splitext(image_filename)
+    number = ""
+
+    for x in file_basename[::-1]:
+        if x.isdigit():
+            number += x
+        else:
+            break
+
+    if len(number) > 0:
+        return {"error": None,
+                "digits": len(number),
+                "image_number": int(number),
+                "prefix": os.path.join(main_path, "".join(file_basename.split(number)[:-1])),
+                "ext": ext}
+    else:
+        return {"error": "No trailing digits found."}
+
+
+def get_all_images_in_sequence(image_file):
+    info = parse_sequenced_image_name(image_file)
+
+    if info["error"] is None:
+        return {
+            "files": glob.glob(info["prefix"] + ("[0-9]" * info["digits"]) + info["ext"]),
+            "digits": info["digits"],
+            "ext": info["ext"],
+            "prefix": info["prefix"]
+        }
+    else:
+        return None

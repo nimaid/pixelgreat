@@ -1,6 +1,6 @@
 [project]
 name = "pixelgreat"
-version = "1.0.1"
+version = "1.1.0"
 description = "A highly realistic RGB pixel filter"
 license= {file = "LICENSE"}
 authors = [
@@ -23,5 +23,5 @@ Issues = "https://github.com/nimaid/pixelgreat/issues"
 
 
 [project.scripts]
-pixelgreat = "pixelgreat.core:run_single"
-pixelgreat-sequence = "pixelgreat.core:run_sequence"
+pixelgreat = "pixelgreat.core:single"
+pixelgreat-sequence = "pixelgreat.core:sequence"
