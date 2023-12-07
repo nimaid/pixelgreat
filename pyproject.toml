@@ -1,6 +1,6 @@
 [project]
 name = "pixelgreat"
-version = "0.1.0"
+version = "1.0.0"
 description = "A highly realistic RGB pixel filter"
 license= {file = "LICENSE"}
 authors = [
@@ -19,6 +19,8 @@ dependencies = [
 [project.urls]
 homepage = "https://github.com/nimaid/pixelgreat"
 repository = "https://github.com/nimaid/pixelgreat"
+Issues = "https://github.com/nimaid/pixelgreat/issues"
+
 
 [project.scripts]
 pixelgreat = "pixelgreat.core:run_single"

@@ -142,51 +142,176 @@ for image_name in image_names:
 ## Full Documentation
 Here are the full definitions for the main class `Pixelgreat` and the main function `pixelgreat`:
 
-### Class: Pixelgreat
-#### \_\_init\_\_
-- `output_size`
+### pixelgreat.Pixelgreat.\_\_init\_\_()
+#### Creates a reusable pixelgreat.Pixelgreat object
+- `output_size` **[required]**
   - The size of the final output
   - A tuple, (width, height)
-  - Each dimension must be at least 3 pixels
-- `pixel_size`
+  - Each dimension must be at least `3` pixels
+- `pixel_size` **[required]**
   - The approximate size of a single pixel
-  - Must be at least 3 pixels
-- `screen_type`
+  - Must be at least `3` pixels
+- `screen_type` **[optional]**
   - The screen type, can be:
     - `pixelgreat.ScreenType.LCD`
     - `pixelgreat.ScreenType.CRT_TV`
     - `pixelgreat.ScreenType.CRT_MONITOR`
-- `direction`
+- `direction` **[optional]**
   - The direction of the pixels, can be:
     - `pixelgreat.Direction.VERTICAL`
     - `pixelgreat.Direction.HORIZONTAL`
-- `pixel_aspect`
+- `pixel_aspect` **[optional]**
   - The aspect ratio of the pixels (width / height)
-  - Must be no less than 0.33, but no bigger than 3.0
-- `pixelate`
+  - Must be between `0.33` and `3.0`
+- `pixelate` **[optional]**
   - If the image should be pixelated before applying the filters
   - A boolean value
-- `washout`
+- `blur` **[optional]**
+  - How much to blur the image (after pixelation, before applying the filter)
+  - Must be between `0.0` and `1.0`
+  - `0` disables the blur effect
+- `washout` **[optional]**
+  - How much light to add to dark pixels
+  - Must be between `0.0` and `1.0`
+  - `0` disables thw washout effect
+- `scanline_strength` **[optional]**
+  - How dark the miniature scanlines are
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline effect
+- `scanline_spacing` **[optional]**
+  - How far apart the scanlines are
+  - Must be between `0.33` and `3.0`
+  - `1` should have approximately 1 scanline per pixel
+- `scanline_size` **[optional]**
+  - How thick the scanlines are
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline effect
+- `scanline_blur` **[optional]**
+  - How much to blur the scanlines
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline blur, making the lines have hard edges
+- `grid_strength` **[optional]**
+  - How strongly to apply the RGB pixel grid filter
+  - Must be between `0.0` and `1.0`
+  - `0` disables the RGB pixel effect
+- `pixel_padding` **[optional]**
+  - How much black space is between pixel elements
+  - Must be between `0.0` and `1.0`
+  - `0` disables the padding, giving plain RGB stripes
+- `rounding` **[optional]**
+  - How much to round the corners of the pixel elements
+  - Only affects the LCD and CRT_TV filters
+  - Must be between `0.0` and `1.0`
+- `bloom_strength` **[optional]**
+  - How much bloom to add to the final image
+  - Must be between `0.0` and `1.0`
+  - `0` disables the bloom effect
+- `bloom_size` **[optional]**
+  - How large to make the bloom added to the final image
+  - Must be between `0.0` and `1.0`
+  - `0` disables the bloom effect
+- `color_mode` **[optional]**
+  - The PIL color mode to use
+  - Must have at least 1 red channel, 1 green channel, and 1 blue channel
 
-```python
-class Pixelgreat:
-    def __init__(,  # A tuple, (width, height)
-                 ,   # The approximate size of a single pixel
-                 =None,  # The screen type, can be pixelgreat.ScreenType.LCD, pixelgreat.ScreenType.LCD
-                 =None,  
-                 =None,  
-                 =None,  
-                 blur=None,  
-                 washout=None,  
-                 scanline_strength=None,  
-                 scanline_spacing=None,  
-                 scanline_size=None,  
-                 scanline_blur=None,  
-                 grid_strength=None,  
-                 pixel_padding=None,  
-                 rounding=None,  
-                 bloom_strength=None,  
-                 bloom_size=None,  
-                 color_mode=None  
-                 )
-```
+Returns: A `pixelgreat.Pixelgreat` object
+
+### pixelgreat.Pixelgreat.apply()
+#### Applies the specified effects to an image
+- `image` **[required]**
+  - The image to convert
+  - Must be a `PIL.Image` object
+
+Returns: A `PIL.Image` object
+
+### pixelgreat.Pixelgreat.get_grid_filter()
+#### Returns the filter image for the RGB pixel grid
+- `adjusted` **[optional]**
+  - If the returned filter should be adjusted by `grid_strength` or not
+
+Returns: A `PIL.Image` object
+
+### pixelgreat.Pixelgreat.get_grid_filter_tile()
+#### Returns the tile used to build the filter image for the RGB pixel grid
+- This method takes no arguments
+
+Returns: A `PIL.Image` object
+
+### pixelgreat.Pixelgreat.get_scanline_filter()
+#### Returns the filter image for the RGB pixel grid
+- `adjusted` **[optional]**
+  - If the returned filter should be adjusted by `scanline_strength` or not
+
+Returns: A `PIL.Image` object
+
+### pixelgreat.pixelgreat()
+#### Applies effects to a single image
+- `image` **[required]**
+  - The image to convert
+  - Each dimension must be at least `3` pixels
+- `pixel_size` **[required]**
+  - The approximate size of a single pixel
+  - Must be at least `3` pixels
+- `output_scale`  **[optional]**
+  - How much to scale the output by, relative to the source image size
+- `screen_type` **[optional]**
+  - The screen type, can be:
+    - `pixelgreat.ScreenType.LCD`
+    - `pixelgreat.ScreenType.CRT_TV`
+    - `pixelgreat.ScreenType.CRT_MONITOR`
+- `direction` **[optional]**
+  - The direction of the pixels, can be:
+    - `pixelgreat.Direction.VERTICAL`
+    - `pixelgreat.Direction.HORIZONTAL`
+- `pixel_aspect` **[optional]**
+  - The aspect ratio of the pixels (width / height)
+  - Must be between `0.33` and `3.0`
+- `pixelate` **[optional]**
+  - If the image should be pixelated before applying the filters
+  - A boolean value
+- `blur` **[optional]**
+  - How much to blur the image (after pixelation, before applying the filter)
+  - Must be between `0.0` and `1.0`
+  - `0` disables the blur effect
+- `washout` **[optional]**
+  - How much light to add to dark pixels
+  - Must be between `0.0` and `1.0`
+  - `0` disables thw washout effect
+- `scanline_strength` **[optional]**
+  - How dark the miniature scanlines are
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline effect
+- `scanline_spacing` **[optional]**
+  - How far apart the scanlines are
+  - Must be between `0.33` and `3.0`
+  - `1` should have approximately 1 scanline per pixel
+- `scanline_size` **[optional]**
+  - How thick the scanlines are
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline effect
+- `scanline_blur` **[optional]**
+  - How much to blur the scanlines
+  - Must be between `0.0` and `1.0`
+  - `0` disables the scanline blur, making the lines have hard edges
+- `grid_strength` **[optional]**
+  - How strongly to apply the RGB pixel grid filter
+  - Must be between `0.0` and `1.0`
+  - `0` disables the RGB pixel effect
+- `pixel_padding` **[optional]**
+  - How much black space is between pixel elements
+  - Must be between `0.0` and `1.0`
+  - `0` disables the padding, giving plain RGB stripes
+- `rounding` **[optional]**
+  - How much to round the corners of the pixel elements
+  - Only affects the LCD and CRT_TV filters
+  - Must be between `0.0` and `1.0`
+- `bloom_strength` **[optional]**
+  - How much bloom to add to the final image
+  - Must be between `0.0` and `1.0`
+  - `0` disables the bloom effect
+- `bloom_size` **[optional]**
+  - How large to make the bloom added to the final image
+  - Must be between `0.0` and `1.0`
+  - `0` disables the bloom effect
+
+Returns: A `PIL.Image` object
