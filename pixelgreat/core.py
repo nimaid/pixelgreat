@@ -1,4 +1,4 @@
-import os.path
+import os
 import sys
 import argparse
 import warnings
@@ -493,9 +493,10 @@ def single(raw_args):
     args = parse_args_single(raw_args)
 
     # Open source image
-    image = Image.open(args.image_in)
+    image = Image.open(os.path.realpath(args.image_in))
 
     # Apply the filter to a single image
+    print("Converting image...")
     result = pixelgreat(image=image,
                         pixel_size=args.pixel_size,
                         screen_type=args.screen_type,
@@ -515,8 +516,15 @@ def single(raw_args):
                         pixelate=args.pixelate,
                         output_scale=args.output_scale
                         )
-    # TODO:
-    result.show()
+
+    # Save it
+    print("Saving image...")
+    output_name = os.path.realpath(args.image_out)
+    output_dir = os.path.dirname(output_name)
+    os.makedirs(output_dir, exist_ok=True)
+    result.save(output_name)
+
+    print(f"Done!\nSaved image: {args.image_out}")
 
 
 # Wrapper for processing a single image
