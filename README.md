@@ -117,7 +117,7 @@ output_size = (
 
 # Make the re-usable converter object just once (slow)
 converter = pg.Pixelgreat(
-    output_size=first_image_size,
+    output_size=output_size,
     pixel_size=20
 )
 
