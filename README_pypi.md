@@ -1,7 +1,7 @@
 <p align="center" style="font-size:100px; font-family:Lexend_Deca;">pixelgreat</p>
 <p align="center" style="font-size:30px; font-family:Lexend_Deca;">A highly realistic RGB pixel filter.</p>
 
-<p align="center"><img src="docs/example.png" width="800px" alt="Example of the effect"/></p>
+<p align="center"><img src="https://github.com/nimaid/pixelgreat/blob/main/docs/example.png?raw=true" width="800px" alt="Example of the effect"/></p>
 
 ## Command Line Usage
 The command to convert a single image is `pixelgreat`:
