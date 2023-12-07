@@ -1,5 +1,5 @@
-<p align="center" style="font-family:Lexend_Deca;"><center><h1>pixelgreat</h1></center></p>
-<p align="center" style="font-family:Lexend_Deca;"><center><h2>A highly realistic RGB pixel filter for Python.</h2></center></p>
+# pixelgreat
+## A highly realistic RGB pixel filter for Python.
 
 <p align="center"><img src="docs/example.png" width="800px" alt="Example of the effect"/></p>
 
