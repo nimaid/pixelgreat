@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 
 tests/processed_images/*
+tests/video/*

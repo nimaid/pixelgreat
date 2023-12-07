@@ -20,6 +20,7 @@ class Pixelgreat:
                  direction=None,  # Set default based on screen type
                  pixel_aspect=None,  # Set to a static default
                  pixelate=None,  # Set to a static default
+                 brighten=None,  # Set to a static default
                  blur=None,  # Set default based on screen type
                  washout=None,  # Set default based on screen type
                  scanline_strength=None,  # Set default based on screen type
@@ -123,6 +124,17 @@ class Pixelgreat:
                 message="Blur amount must be between {min} and {max} (got {val})"
             )
             self.blur = blur
+
+        if brighten is None:
+            self.brighten = DEFAULTS["brighten"]
+        else:
+            helpers.assert_value_in_range(
+                brighten,
+                minimum=0,
+                maximum=1,
+                message="Brighten amount must be between {min} and {max} (got {val})"
+            )
+            self.brighten = brighten
 
         if bloom_size is None:
             bloom_size = DEFAULTS["bloom_size"]
@@ -257,6 +269,7 @@ class Pixelgreat:
             pixel_width=self.pixel_width,
             pixel_padding=self.pixel_padding,
             direction=self.direction,
+            brighten=self.brighten,
             washout=self.washout,
             blur=self.blur,
             bloom_size=self.bloom_size,
@@ -294,6 +307,7 @@ def pixelgreat(image,
                direction=None,
                pixel_aspect=None,
                pixelate=None,
+               brighten=None,
                blur=None,
                washout=None,
                scanline_strength=None,
@@ -317,6 +331,7 @@ def pixelgreat(image,
         pixel_padding=pixel_padding,
         direction=direction,
         washout=washout,
+        brighten=brighten,
         blur=blur,
         bloom_size=bloom_size,
         pixel_aspect=pixel_aspect,
@@ -388,6 +403,12 @@ def parse_args_single():
 
     parser.add_argument("-npx", "--no-pixelate", dest="pixelate", action="store_false",
                         help="if given, the image will not be pixelated, but the other filters will still be applied"
+                        )
+
+    parser.add_argument("-br", "--brighten", dest="brighten", type=float, required=False,
+                        default=None,
+                        help="how much to brighten the source image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["brighten"])
                         )
 
     parser.add_argument("-b", "--blur", dest="blur_amount", type=float, required=False,
@@ -504,6 +525,7 @@ def single():
                         pixel_padding=args.padding,
                         direction=args.direction,
                         washout=args.washout,
+                        brighten=args.brighten,
                         blur=args.blur_amount,
                         bloom_size=args.bloom_size,
                         pixel_aspect=args.pixel_aspect,
@@ -582,6 +604,12 @@ def parse_args_sequence():
 
     parser.add_argument("-npx", "--no-pixelate", dest="pixelate", action="store_false",
                         help="if given, the image will not be pixelated, but the other filters will still be applied"
+                        )
+
+    parser.add_argument("-br", "--brighten", dest="brighten", type=float, required=False,
+                        default=None,
+                        help="how much to brighten the source image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["brighten"])
                         )
 
     parser.add_argument("-b", "--blur", dest="blur_amount", type=float, required=False,
@@ -681,6 +709,10 @@ def parse_args_sequence():
     if helpers.parse_sequenced_image_name(parsed_args.image_in)["error"] is not None:
         parser.error("No image sequence found. Ensure they are named like this: name0000.png, name0001.png, etc.")
 
+    # Set default scale
+    if parsed_args.output_scale is None:
+        parsed_args.output_scale = 1.0
+
     return parsed_args
 
 
@@ -714,6 +746,7 @@ def sequence():
         pixel_padding=args.padding,
         direction=args.direction,
         washout=args.washout,
+        brighten=args.brighten,
         blur=args.blur_amount,
         bloom_size=args.bloom_size,
         pixel_aspect=args.pixel_aspect,
@@ -747,6 +780,8 @@ def sequence():
         main_name, ext = os.path.splitext(args.image_out)
         this_number = str(i).rjust(sequence_info["digits"], "0")
         output_name = f"{main_name}{this_number}{ext}"
+
+        print(f"  Saving image...")
 
         # Save the image
         try:

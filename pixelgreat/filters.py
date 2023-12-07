@@ -1,5 +1,5 @@
 import math
-from PIL import Image, ImageDraw, ImageChops, ImageFilter
+from PIL import Image, ImageDraw, ImageChops, ImageFilter, ImageEnhance
 
 from . import helpers
 from .constants import Direction, ScreenType
@@ -566,6 +566,7 @@ class CompositeFilter:
                  pixel_width,
                  pixel_padding,
                  direction,
+                 brighten=1.0,
                  washout=0.0,
                  blur=0.0,
                  bloom_size=0.0,
@@ -587,6 +588,9 @@ class CompositeFilter:
         self.pixel_padding = pixel_padding
 
         self.direction = direction
+
+        self.brighten = brighten
+        self.brighten_value = 1.0 + ((1/3) * self.brighten)
 
         self.washout = washout
         self.washout_value = round((self.washout * 255) / 10)
@@ -712,6 +716,11 @@ class CompositeFilter:
         # Make input image the correct color mode
         if image.mode != self.color_mode:
             image = image.convert(self.color_mode)
+
+        # Brighten if applicable
+        if self.brighten > 0:
+            image = ImageEnhance.Contrast(image).enhance(self.brighten_value)
+            image = ImageEnhance.Brightness(image).enhance(self.brighten_value)
 
         # Pixelate / scale to final size
         if self.pixelate:

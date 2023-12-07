@@ -1,5 +1,5 @@
-<p align="center" style="font-size:100px; font-family:Lexend_Deca;">pixelgreat</p>
-<p align="center" style="font-size:30px; font-family:Lexend_Deca;">A highly realistic RGB pixel filter.</p>
+<p align="center" style="font-family:Lexend_Deca;"><center><h1>pixelgreat</h1></center></p>
+<p align="center" style="font-family:Lexend_Deca;"><center><h2>A highly realistic RGB pixel filter.</h2></center></p>
 
 <p align="center"><img src="https://github.com/nimaid/pixelgreat/blob/main/docs/example.png?raw=true" width="800px" alt="Example of the effect"/></p>
 
@@ -7,8 +7,8 @@
 The command to convert a single image is `pixelgreat`:
 ```
 usage: pixelgreat [-h] -i IMAGE_IN -o IMAGE_OUT -s PIXEL_SIZE [-os OUTPUT_SCALE] [-t SCREEN_TYPE]
-                  [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-b BLUR_AMOUNT] [-w WASHOUT]
-                  [-sst SCANLINE_STRENGTH] [-ssp SCANLINE_SPACING] [-ssz SCANLINE_SIZE]
+                  [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-br BRIGHTEN] [-b BLUR_AMOUNT]
+                  [-w WASHOUT] [-sst SCANLINE_STRENGTH] [-ssp SCANLINE_SPACING] [-ssz SCANLINE_SIZE]
                   [-sb SCANLINE_BLUR] [-gst GRID_STRENGTH] [-p PADDING] [-r ROUNDING]
                   [-bst BLOOM_STRENGTH] [-bsz BLOOM_SIZE]
 
@@ -36,6 +36,8 @@ options:
                         the aspect ratio of the pixels, width / height {0.33 - 3.0} [1.0]
   -npx, --no-pixelate   if given, the image will not be pixelated, but the other filters will still
                         be applied
+  -br BRIGHTEN, --brighten BRIGHTEN
+                        how much to brighten the source image {0.0 - 1.0} [1.0]
   -b BLUR_AMOUNT, --blur BLUR_AMOUNT
                         how much to blur the source image {0.0 - 1.0} [varies w/ screen type]
   -w WASHOUT, --washout WASHOUT
@@ -64,10 +66,11 @@ options:
 To process an image sequence, use the command `pixelgreat-sequence`:
 ```
 usage: pixelgreat-sequence [-h] -i IMAGE_IN -o IMAGE_OUT -s PIXEL_SIZE [-os OUTPUT_SCALE]
-                           [-t SCREEN_TYPE] [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-b BLUR_AMOUNT]
-                           [-w WASHOUT] [-sst SCANLINE_STRENGTH] [-ssp SCANLINE_SPACING]
-                           [-ssz SCANLINE_SIZE] [-sb SCANLINE_BLUR] [-gst GRID_STRENGTH]
-                           [-p PADDING] [-r ROUNDING] [-bst BLOOM_STRENGTH] [-bsz BLOOM_SIZE]
+                           [-t SCREEN_TYPE] [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-br BRIGHTEN]
+                           [-b BLUR_AMOUNT] [-w WASHOUT] [-sst SCANLINE_STRENGTH]
+                           [-ssp SCANLINE_SPACING] [-ssz SCANLINE_SIZE] [-sb SCANLINE_BLUR]
+                           [-gst GRID_STRENGTH] [-p PADDING] [-r ROUNDING] [-bst BLOOM_STRENGTH]
+                           [-bsz BLOOM_SIZE]
 
 A highly realistic RGB pixel filter
 
@@ -81,7 +84,8 @@ options:
   -i IMAGE_IN, --input IMAGE_IN
                         the image to convert (must be part of a sequence)
   -o IMAGE_OUT, --output IMAGE_OUT
-                        where to save the converted image sequence, and what filetype to save them as
+                        where to save the converted image sequence, and what filetype to save them
+                        as
   -s PIXEL_SIZE, --size PIXEL_SIZE
                         the size of the pixels {3 - no limit}
   -os OUTPUT_SCALE, --output-scale OUTPUT_SCALE
@@ -95,6 +99,8 @@ options:
                         the aspect ratio of the pixels, width / height {0.33 - 3.0} [1.0]
   -npx, --no-pixelate   if given, the image will not be pixelated, but the other filters will still
                         be applied
+  -br BRIGHTEN, --brighten BRIGHTEN
+                        how much to brighten the source image {0.0 - 1.0} [1.0]
   -b BLUR_AMOUNT, --blur BLUR_AMOUNT
                         how much to blur the source image {0.0 - 1.0} [varies w/ screen type]
   -w WASHOUT, --washout WASHOUT
@@ -221,6 +227,10 @@ Here are the full definitions for the main class `Pixelgreat` and the main funct
 - `pixelate` **[optional]**
   - If the image should be pixelated before applying the filters
   - A boolean value
+- `brighten` **[optional]**
+  - How much to brighten the image (before processing)
+  - Must be between `0.0` and `1.0`
+  - `0` disables the brightening effect
 - `blur` **[optional]**
   - How much to blur the image (after pixelation, before applying the filter)
   - Must be between `0.0` and `1.0`
@@ -319,6 +329,10 @@ Here are the full definitions for the main class `Pixelgreat` and the main funct
 - `pixelate` **[optional]**
   - If the image should be pixelated before applying the filters
   - A boolean value
+- `brighten` **[optional]**
+  - How much to brighten the image (before processing)
+  - Must be between `0.0` and `1.0`
+  - `0` disables the brightening effect
 - `blur` **[optional]**
   - How much to blur the image (after pixelation, before applying the filter)
   - Must be between `0.0` and `1.0`

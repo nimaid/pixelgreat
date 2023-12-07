@@ -32,6 +32,7 @@ DEFAULTS = {
         "CRT_TV": 0.5,
         "CRT_MONITOR": 0.5
     },
+    "brighten": 1.0,
     "blur": {
         "LCD": 0,
         "CRT_TV": 0.5,
