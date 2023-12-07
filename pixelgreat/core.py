@@ -764,4 +764,5 @@ def sequence():
     end_time = time.time()
     process_time = round(end_time - start_time, 1)
 
-    print(f"Done converting {image_count} images in {process_time} seconds!")
+    print(f"Done converting {image_count} images in {process_time} seconds!\n"
+          f"Saved images to {output_dir}")

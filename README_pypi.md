@@ -59,7 +59,7 @@ options:
   -bsz BLOOM_SIZE, --bloom-size BLOOM_SIZE
                         the size of the bloom added to the output image {0.0 - 1.0} [0.5]
 ```
-To process an image sequence, use the command `pixelgreat-sequence`
+To process an image sequence, use the command `pixelgreat-sequence`:
 ```
 usage: pixelgreat-sequence [-h] -i IMAGE_IN -o IMAGE_OUT -s PIXEL_SIZE [-os OUTPUT_SCALE]
                            [-t SCREEN_TYPE] [-d DIRECTION] [-a PIXEL_ASPECT] [-npx] [-b BLUR_AMOUNT]
