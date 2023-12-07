@@ -1,9 +1,11 @@
+import os.path
 import sys
 import argparse
 import warnings
+import math
 from PIL import Image
 
-from .constants import ScreenType, DESCRIPTION, DEFAULTS
+from .constants import ScreenType, Direction, DESCRIPTION, DEFAULTS, SUPPORTED_EXTENSIONS
 from . import helpers
 from . import filters
 
@@ -16,20 +18,20 @@ class Pixelgreat:
                  output_size,
                  pixel_size,
                  screen_type=None,  # Set to a static default
-                 pixel_padding=None,  # Set default based on screen type
                  direction=None,  # Set default based on screen type
-                 washout=None,  # Set default based on screen type
-                 blur=None,  # Set default based on screen type
-                 bloom_size=None,  # Set to a static default
                  pixel_aspect=None,  # Set to a static default
-                 rounding=None,  # Set default based on screen type
+                 pixelate=None,  # Set to a static default
+                 blur=None,  # Set default based on screen type
+                 washout=None,  # Set default based on screen type
+                 scanline_strength=None,  # Set default based on screen type
                  scanline_spacing=None,  # Set to a static default
                  scanline_size=None,  # Set to a static default
                  scanline_blur=None,  # Set to a static default
-                 scanline_strength=None,  # Set default based on screen type
-                 bloom_strength=None,  # Set to a static default
                  grid_strength=None,  # Set to a static default
-                 pixelate=None,  # Set to a static default
+                 pixel_padding=None,  # Set default based on screen type
+                 rounding=None,  # Set default based on screen type
+                 bloom_strength=None,  # Set to a static default
+                 bloom_size=None,  # Set to a static default
                  color_mode=None  # Set to a static default
                  ):
         # Get basic settings used for all filters
@@ -285,27 +287,32 @@ class Pixelgreat:
         return self.filter.get_scanline_filter(adjusted=adjusted)
 
 
-# A single use helper function
+# A single use helper function to process a single image
 def pixelgreat(image,
                pixel_size,
+               output_scale=1.0,
                screen_type=None,
-               pixel_padding=None,
                direction=None,
-               washout=None,
-               blur=None,
-               bloom_size=None,
                pixel_aspect=None,
-               rounding=None,
+               pixelate=None,
+               blur=None,
+               washout=None,
+               scanline_strength=None,
                scanline_spacing=None,
                scanline_size=None,
                scanline_blur=None,
-               scanline_strength=None,
-               bloom_strength=None,
                grid_strength=None,
-               pixelate=None,
+               pixel_padding=None,
+               rounding=None,
+               bloom_strength=None,
+               bloom_size=None
                ):
+    output_size = (
+        max(round(image.width * output_scale), 3),
+        max(round(image.height * output_scale), 3)
+    )
     pg_object = Pixelgreat(
-        output_size=image.size,
+        output_size=output_size,
         pixel_size=pixel_size,
         screen_type=screen_type,
         pixel_padding=pixel_padding,
@@ -324,80 +331,358 @@ def pixelgreat(image,
         pixelate=pixelate,
         color_mode=image.mode
     )
-
     result = pg_object.apply(image)
 
     return result
 
+
 # ---- PROGRAM EXECUTION ----
 
 
-# Parse arguments
-def parse_args(args):
+# Parse arguments for a single image
+def parse_args_single(args):
     parser = argparse.ArgumentParser(
-        description=f"{DESCRIPTION}\n\nValid values are shown in {{braces}}\n."
-                    f"Default parameters are shown in [brackets].",
+        description=f"{DESCRIPTION}\n\n"
+                    f"Valid values are shown in {{braces}}\n"
+                    f"Default values are shown in [brackets]",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("-i", "--input", dest="image", type=helpers.file_path, required=True,
-                        help="the image to convert")
+    parser.add_argument("-i", "--input", dest="image_in", type=helpers.file_path, required=True,
+                        help="the image to convert"
+                        )
+
+    parser.add_argument("-o", "--output", dest="image_out", type=str, required=True,
+                        help="where to save the converted image, and what filetype to save it as"
+                        )
 
     parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
-                        help="the size of the pixels {>3}")
+                        help="the size of the pixels {3 - no limit}"
+                        )
+
+    parser.add_argument("-os", "--output-scale", dest="output_scale", type=float, required=False,
+                        default=None,
+                        help="How much to scale the output size by {no limits, 1.0 is no scaling, 2.0 is 2x size} [1.0]"
+                        )
+
+    parser.add_argument("-t", "--type", dest="screen_type", type=str, required=False,
+                        default=None,
+                        help="the type of RGB filter to apply {{{lcd}, {crt_tv}, {crt_mon}}} [{default}]".format(
+                            lcd=ScreenType.LCD.value,
+                            crt_tv=ScreenType.CRT_TV.value,
+                            crt_mon=ScreenType.CRT_MONITOR.value,
+                            default=DEFAULTS["screen_type"].value)
+                        )
+
+    parser.add_argument("-d", "--direction", dest="direction", type=str, required=False,
+                        default=None,
+                        help="the direction of the RGB filter {{{vert}, {horiz}}} [varies w/ screen type]".format(
+                            vert=Direction.VERTICAL.value,
+                            horiz=Direction.HORIZONTAL.value)
+                        )
+
+    parser.add_argument("-a", "--aspect", dest="pixel_aspect", type=float, required=False,
+                        default=None,
+                        help="the aspect ratio of the pixels, width / height {{0.33 - 3.0}} [{default}]".format(
+                            default=DEFAULTS["pixel_aspect"])
+                        )
+
+    parser.add_argument("-npx", "--no-pixelate", dest="pixelate", action="store_false",
+                        help="if given, the image will not be pixelated, but the other filters will still be applied"
+                        )
+
+    parser.add_argument("-b", "--blur", dest="blur_amount", type=float, required=False,
+                        default=None,
+                        help="how much to blur the source image {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-w", "--washout", dest="washout", type=float, required=False,
+                        default=None,
+                        help="how much to brighten dark pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-sst", "--scanline-strength", dest="scanline_strength", type=float, required=False,
+                        default=None,
+                        help="the strength of the CRT scanline filter {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-ssp", "--scanline-spacing", dest="scanline_spacing", type=float, required=False,
+                        default=None,
+                        help="how far apart to space the CRT scanlines {{0.33 - 3.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_spacing"])
+                        )
+
+    parser.add_argument("-ssz", "--scanline-size", dest="scanline_size", type=float, required=False,
+                        default=None,
+                        help="how wide the CRT scanlines are {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_size"])
+                        )
+
+    parser.add_argument("-sb", "--scanline-blur", dest="scanline_blur", type=float, required=False,
+                        default=None,
+                        help="how much blur to apply to the CRT scanline filter {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_blur"])
+                        )
+
+    parser.add_argument("-gst", "--grid-strength", dest="grid_strength", type=float, required=False,
+                        default=None,
+                        help="the strength of the RGB pixel grid filter {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["grid_strength"])
+                        )
+
+    parser.add_argument("-p", "--padding", dest="padding", type=float, required=False,
+                        default=None,
+                        help="how much black padding to add around the pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-r", "--rounding", dest="rounding", type=float, required=False,
+                        default=None,
+                        help="how much to round the corners of the pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-bst", "--bloom-strength", dest="bloom_strength", type=float, required=False,
+                        default=None,
+                        help="the amount of bloom to add to the output image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["bloom_strength"])
+                        )
+
+    parser.add_argument("-bsz", "--bloom-size", dest="bloom_size", type=float, required=False,
+                        default=None,
+                        help="the size of the bloom added to the output image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["bloom_size"])
+                        )
+
+    parsed_args = parser.parse_args()
+
+    # Interpret string arguments
+    if parsed_args.screen_type is not None:
+        if parsed_args.screen_type == ScreenType.LCD.value:
+            parsed_args.screen_type = ScreenType.LCD
+        elif parsed_args.screen_type == ScreenType.CRT_TV.value:
+            parsed_args.screen_type = ScreenType.CRT_TV
+        elif parsed_args.screen_type == ScreenType.CRT_MONITOR.value:
+            parsed_args.screen_type = ScreenType.CRT_MONITOR
+        else:
+            parser.error(f"\"{parsed_args.screen_type}\" is not a valid screen type")
+
+    if parsed_args.direction is not None:
+        if parsed_args.direction == Direction.VERTICAL.value:
+            parsed_args.direction = Direction.VERTICAL
+        elif parsed_args.direction == Direction.HORIZONTAL.value:
+            parsed_args.direction = Direction.HORIZONTAL
+        else:
+            parser.error(f"\"{parsed_args.direction}\" is not a valid direction")
+
+    # Verify the target file extensions are supported
+    input_name, input_ext = os.path.splitext(parsed_args.image_in)
+    input_ext = input_ext.lower()
+    if input_ext not in SUPPORTED_EXTENSIONS:
+        parser.error(f"\"{input_ext}\" is not a supported input format")
+
+    output_name, output_ext = os.path.splitext(parsed_args.image_out)
+    output_ext = output_ext.lower()
+    if output_ext not in SUPPORTED_EXTENSIONS:
+        parser.error(f"\"{output_ext}\" is not a supported output format")
+
+    return parsed_args
+
+
+# Process a single image
+def single(raw_args):
+    # Parse args
+    args = parse_args_single(raw_args)
+
+    # Open source image
+    image = Image.open(args.image_in)
+
+    # Apply the filter to a single image
+    result = pixelgreat(image=image,
+                        pixel_size=args.pixel_size,
+                        screen_type=args.screen_type,
+                        pixel_padding=args.padding,
+                        direction=args.direction,
+                        washout=args.washout,
+                        blur=args.blur_amount,
+                        bloom_size=args.bloom_size,
+                        pixel_aspect=args.pixel_aspect,
+                        rounding=args.rounding,
+                        scanline_spacing=args.scanline_spacing,
+                        scanline_size=args.scanline_size,
+                        scanline_blur=args.scanline_blur,
+                        scanline_strength=args.scanline_strength,
+                        bloom_strength=args.bloom_strength,
+                        grid_strength=args.grid_strength,
+                        pixelate=args.pixelate,
+                        output_scale=args.output_scale
+                        )
+    # TODO:
+    result.show()
+
+
+# Wrapper for processing a single image
+def run_single():
+    single(sys.argv[1:])
+
+
+# Parse arguments for an image sequence
+def parse_args_sequence(args):
+    parser = argparse.ArgumentParser(
+        description=f"{DESCRIPTION}\n\n"
+                    f"Valid values are shown in {{braces}}\n"
+                    f"Default values are shown in [brackets]\n\n"
+                    f"For image sequences, the output size is based on the first image in the sequence",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
 
     '''
-    parser.add_argument("-1", "--first", dest="first_arg", type=float, required=True,
-        help="the first argument")
-    parser.add_argument("-2", "--second", dest="second_arg", type=float, required=False, default=1.0,
-        help="the second argument [1]")
-    parser.add_argument("-o", "--operation", dest="opcode", type=str, required=False, default="+",
-        help="the operation to perform on the arguments, either \"+\", \"-\", \"*\", or \"/\" [+]")
+    parser.add_argument("-i", "--input", dest="image_in", type=helpers.file_path, required=True,
+                        help="the image to convert"
+                        )
+    '''
+    '''
+    parser.add_argument("-o", "--output", dest="image_out", type=str, required=True,
+                        help="where to save the converted image, and what filetype to save it as"
+                        )
+    '''
+    parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
+                        help="the size of the pixels {3 - no limit}"
+                        )
+
+    parser.add_argument("-os", "--output-scale", dest="output_scale", type=float, required=False,
+                        default=None,
+                        help="How much to scale the output size by {no limits, 1.0 is no scaling, 2.0 is 2x size} [1.0]"
+                        )
+
+    parser.add_argument("-t", "--type", dest="screen_type", type=str, required=False,
+                        default=None,
+                        help="the type of RGB filter to apply {{{lcd}, {crt_tv}, {crt_mon}}} [{default}]".format(
+                            lcd=ScreenType.LCD.value,
+                            crt_tv=ScreenType.CRT_TV.value,
+                            crt_mon=ScreenType.CRT_MONITOR.value,
+                            default=DEFAULTS["screen_type"].value)
+                        )
+
+    parser.add_argument("-d", "--direction", dest="direction", type=str, required=False,
+                        default=None,
+                        help="the direction of the RGB filter {{{vert}, {horiz}}} [varies w/ screen type]".format(
+                            vert=Direction.VERTICAL.value,
+                            horiz=Direction.HORIZONTAL.value)
+                        )
+
+    parser.add_argument("-a", "--aspect", dest="pixel_aspect", type=float, required=False,
+                        default=None,
+                        help="the aspect ratio of the pixels, width / height {{0.33 - 3.0}} [{default}]".format(
+                            default=DEFAULTS["pixel_aspect"])
+                        )
+
+    parser.add_argument("-npx", "--no-pixelate", dest="pixelate", action="store_false",
+                        help="if given, the image will not be pixelated, but the other filters will still be applied"
+                        )
+
+    parser.add_argument("-b", "--blur", dest="blur_amount", type=float, required=False,
+                        default=None,
+                        help="how much to blur the source image {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-w", "--washout", dest="washout", type=float, required=False,
+                        default=None,
+                        help="how much to brighten dark pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-sst", "--scanline-strength", dest="scanline_strength", type=float, required=False,
+                        default=None,
+                        help="the strength of the CRT scanline filter {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-ssp", "--scanline-spacing", dest="scanline_spacing", type=float, required=False,
+                        default=None,
+                        help="how far apart to space the CRT scanlines {{0.33 - 3.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_spacing"])
+                        )
+
+    parser.add_argument("-ssz", "--scanline-size", dest="scanline_size", type=float, required=False,
+                        default=None,
+                        help="how wide the CRT scanlines are {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_size"])
+                        )
+
+    parser.add_argument("-sb", "--scanline-blur", dest="scanline_blur", type=float, required=False,
+                        default=None,
+                        help="how much blur to apply to the CRT scanline filter {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["scanline_blur"])
+                        )
+
+    parser.add_argument("-gst", "--grid-strength", dest="grid_strength", type=float, required=False,
+                        default=None,
+                        help="the strength of the RGB pixel grid filter {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["grid_strength"])
+                        )
+
+    parser.add_argument("-p", "--padding", dest="padding", type=float, required=False,
+                        default=None,
+                        help="how much black padding to add around the pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-r", "--rounding", dest="rounding", type=float, required=False,
+                        default=None,
+                        help="how much to round the corners of the pixels {0.0 - 1.0} [varies w/ screen type]"
+                        )
+
+    parser.add_argument("-bst", "--bloom-strength", dest="bloom_strength", type=float, required=False,
+                        default=None,
+                        help="the amount of bloom to add to the output image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["bloom_strength"])
+                        )
+
+    parser.add_argument("-bsz", "--bloom-size", dest="bloom_size", type=float, required=False,
+                        default=None,
+                        help="the size of the bloom added to the output image {{0.0 - 1.0}} [{default}]".format(
+                            default=DEFAULTS["bloom_size"])
+                        )
+
+    parsed_args = parser.parse_args()
+
+    # Interpret string arguments
+    if parsed_args.screen_type is not None:
+        if parsed_args.screen_type == ScreenType.LCD.value:
+            parsed_args.screen_type = ScreenType.LCD
+        elif parsed_args.screen_type == ScreenType.CRT_TV.value:
+            parsed_args.screen_type = ScreenType.CRT_TV
+        elif parsed_args.screen_type == ScreenType.CRT_MONITOR.value:
+            parsed_args.screen_type = ScreenType.CRT_MONITOR
+        else:
+            parser.error(f"\"{parsed_args.screen_type}\" is not a valid screen type")
+
+    if parsed_args.direction is not None:
+        if parsed_args.direction == Direction.VERTICAL.value:
+            parsed_args.direction = Direction.VERTICAL
+        elif parsed_args.direction == Direction.HORIZONTAL.value:
+            parsed_args.direction = Direction.HORIZONTAL
+        else:
+            parser.error(f"\"{parsed_args.direction}\" is not a valid direction")
+
+    # Verify the target file extensions are supported
+    '''
+    input_name, input_ext = os.path.splitext(parsed_args.image_in)
+    input_ext = input_ext.lower()
+    if input_ext not in SUPPORTED_EXTENSIONS:
+        parser.error(f"\"{input_ext}\" is not a supported input format")
+
+    output_name, output_ext = os.path.splitext(parsed_args.image_out)
+    output_ext = output_ext.lower()
+    if output_ext not in SUPPORTED_EXTENSIONS:
+        parser.error(f"\"{output_ext}\" is not a supported output format")
     '''
 
-    '''
-    screen_type = None,
-    pixel_padding = None,
-    direction = None,
-    washout = None,
-    blur = None,
-    bloom_size = None,
-    pixel_aspect = None,
-    rounding = None,
-    scanline_spacing = None,
-    scanline_size = None,
-    scanline_blur = None,
-    scanline_strength = None,
-    bloom_strength = None,
-    grid_strength = None,
-    pixelate = None,
-    output_scale = None
-    '''
+    return parsed_args
 
 
+# Process an image sequence
+def sequence(raw_args):
+    # args = parse_args_sequence(raw_args)
+    print("Image sequences are not yet implemented. Soon.™")
 
 
-
-
-
-
-
-
-
-    return parser.parse_args()
-
-
-def main(raw_args):
-    args = parse_args(raw_args)
-    image = Image.open(args.image)
-    pixelgreat(image, 20).show()
-
-    pass
-
-
-def run():
-    main(sys.argv[1:])
-
-
-if __name__ == "__main__":
-    run()
+# Wrapper for processing an image sequence
+def run_sequence():
+    sequence(sys.argv[1:])

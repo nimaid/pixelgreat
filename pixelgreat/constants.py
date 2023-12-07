@@ -1,17 +1,18 @@
 from enum import Enum
+from PIL import Image
 
 DESCRIPTION = "A highly realistic RGB pixel filter"
 
 
 class Direction(Enum):
-    VERTICAL = 0
-    HORIZONTAL = 1
+    VERTICAL = "V"
+    HORIZONTAL = "H"
 
 
 class ScreenType(Enum):
-    LCD = 0
-    CRT_TV = 1
-    CRT_MONITOR = 2
+    LCD = "LCD"
+    CRT_TV = "CRT_TV"
+    CRT_MONITOR = "CRT_MONITOR"
 
 
 DEFAULTS = {
@@ -57,4 +58,4 @@ DEFAULTS = {
     "output_scale": 1.0
 }
 
-
+SUPPORTED_EXTENSIONS = tuple([ex for ex, f in Image.registered_extensions().items() if f in Image.OPEN])
