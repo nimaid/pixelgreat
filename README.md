@@ -3,7 +3,7 @@ A highly realistic RGB pixel filter for Python.
 
 <p align="center"><img src="docs/example.png" width="800px" alt="Example of the effect"/></p>
 
-[<p align="center"><img src="https://pypi.org/static/images/logo-large.9f732b5f.svg" width="200px" alt="pixelgreat on Pypi"></p>](https://pypi.org/project/pixelgreat/ "pixelgreat on Pypi")
+<p align="center"><a href="https://pypi.org/project/pixelgreat/"><img src="https://pypi.org/static/images/logo-large.9f732b5f.svg" width="200px" alt="pixelgreat on Pypi"></a></p>
 
 ## Installation
 First, install Python 3. Then run this command:
