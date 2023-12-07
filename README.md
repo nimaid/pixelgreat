@@ -1,6 +1,8 @@
 # pixelgreat
 A highly realistic RGB pixel filter for Python.
 
+<img src="docs/example.png" width="800px" alt="Example of the effect"/>
+
 [PyPI](https://pypi.org/project/pixelgreat/)
 
 ## Installation
