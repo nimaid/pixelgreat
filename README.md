@@ -101,6 +101,7 @@ If you want to process multiple images using the same settings and output size e
 ```python
 from PIL import Image
 import pixelgreat as pg
+import os
 
 image_names = ["image1.png", "image2.png", "image3.png"]
 
@@ -141,11 +142,12 @@ for image_name in image_names:
     image_out.close()
 ```
 
-## Full Documentation
+# Full Documentation
 Here are the full definitions for the main class `Pixelgreat` and the main function `pixelgreat`:
 
-### pixelgreat.Pixelgreat.\_\_init\_\_()
-#### Creates a reusable pixelgreat.Pixelgreat object
+## pixelgreat.Pixelgreat.\_\_init\_\_()
+### Creates a reusable pixelgreat.Pixelgreat object
+**Returns:** A `pixelgreat.Pixelgreat` object
 - `output_size` **[required]**
   - The size of the final output
   - A tuple, (width, height)
@@ -216,38 +218,33 @@ Here are the full definitions for the main class `Pixelgreat` and the main funct
   - The PIL color mode to use
   - Must have at least 1 red channel, 1 green channel, and 1 blue channel
 
-Returns: A `pixelgreat.Pixelgreat` object
-
-### pixelgreat.Pixelgreat.apply()
-#### Applies the specified effects to an image
+## pixelgreat.Pixelgreat.apply()
+### Applies the specified effects to an image
+**Returns:** A `PIL.Image` object
 - `image` **[required]**
   - The image to convert
   - Must be a `PIL.Image` object
 
-Returns: A `PIL.Image` object
-
-### pixelgreat.Pixelgreat.get_grid_filter()
-#### Returns the filter image for the RGB pixel grid
+## pixelgreat.Pixelgreat.get_grid_filter()
+### Returns the filter image for the RGB pixel grid
+**Returns:** A `PIL.Image` object
 - `adjusted` **[optional]**
   - If the returned filter should be adjusted by `grid_strength` or not
 
-Returns: A `PIL.Image` object
-
-### pixelgreat.Pixelgreat.get_grid_filter_tile()
-#### Returns the tile used to build the filter image for the RGB pixel grid
+## pixelgreat.Pixelgreat.get_grid_filter_tile()
+### Returns the tile used to build the filter image for the RGB pixel grid
+**Returns:** A `PIL.Image` object
 - This method takes no arguments
 
-Returns: A `PIL.Image` object
-
-### pixelgreat.Pixelgreat.get_scanline_filter()
-#### Returns the filter image for the RGB pixel grid
+## pixelgreat.Pixelgreat.get_scanline_filter()
+### Returns the filter image for the RGB pixel grid
+**Returns:** A `PIL.Image` object
 - `adjusted` **[optional]**
   - If the returned filter should be adjusted by `scanline_strength` or not
 
-Returns: A `PIL.Image` object
-
-### pixelgreat.pixelgreat()
-#### Applies effects to a single image
+## pixelgreat.pixelgreat()
+### Applies effects to a single image
+**Returns:** A `PIL.Image` object
 - `image` **[required]**
   - The image to convert
   - Each dimension must be at least `3` pixels
@@ -315,5 +312,3 @@ Returns: A `PIL.Image` object
   - How large to make the bloom added to the final image
   - Must be between `0.0` and `1.0`
   - `0` disables the bloom effect
-
-Returns: A `PIL.Image` object
