@@ -1,5 +1,5 @@
-# pixelgreat
-A highly realistic RGB pixel filter for Python.
+<p align="center" style="font-size:100px; font-family:Lexend_Deca;">pixelgreat</p>
+<p align="center" style="font-size:30px; font-family:Lexend_Deca;">A highly realistic RGB pixel filter for Python.</p>
 
 <p align="center"><img src="docs/example.png" width="800px" alt="Example of the effect"/></p>
 
@@ -89,7 +89,7 @@ options:
   -i IMAGE_IN, --input IMAGE_IN
                         the image to convert (must be part of a sequence)
   -o IMAGE_OUT, --output IMAGE_OUT
-                        where to save the converted image sequence, and what filetype to them it as
+                        where to save the converted image sequence, and what filetype to save them as
   -s PIXEL_SIZE, --size PIXEL_SIZE
                         the size of the pixels {3 - no limit}
   -os OUTPUT_SCALE, --output-scale OUTPUT_SCALE

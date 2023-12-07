@@ -546,7 +546,7 @@ def parse_args_sequence():
                         )
 
     parser.add_argument("-o", "--output", dest="image_out", type=str, required=True,
-                        help="where to save the converted image sequence, and what filetype to them it as"
+                        help="where to save the converted image sequence, and what filetype to save them as"
                         )
 
     parser.add_argument("-s", "--size", dest="pixel_size", type=float, required=True,
