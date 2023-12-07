@@ -1,5 +1,5 @@
-<p align="center" style="font-family:Lexend_Deca;"><center><h1>pixelgreat</h1></center></p>
-<p align="center" style="font-family:Lexend_Deca;"><center><h2>A highly realistic RGB pixel filter.</h2></center></p>
+# pixelgreat
+## A highly realistic RGB pixel filter.
 
 <p align="center"><img src="https://github.com/nimaid/pixelgreat/blob/main/docs/example.png?raw=true" width="800px" alt="Example of the effect"/></p>
 
