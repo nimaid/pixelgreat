@@ -1,6 +1,8 @@
 # pixelgreat
 A highly realistic RGB pixel filter for Python.
 
+[PyPI](https://pypi.org/project/pixelgreat/)
+
 ## Installation
 First, install Python 3. Then run this command:
 ```commandline
