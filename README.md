@@ -1,4 +1,4 @@
-# pixelgreat
+# <img src="icon.png" height="20px" alt="Pixelgreat"/> Pixelgreat
 ### A highly realistic RGB pixel filter for Python.
 
 <p align="center"><img src="docs/example.png" width="800px" alt="Example of the effect"/></p>
