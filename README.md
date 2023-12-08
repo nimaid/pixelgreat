@@ -316,7 +316,7 @@ Here are the full definitions for the main class `Pixelgreat` and the main funct
 - This method takes no arguments
 
 ## pixelgreat.Pixelgreat.get_scanline_filter()
-### Returns the filter image for the RGB pixel grid
+### Returns the filter image used for the scanlines
 **Returns:** A `PIL.Image` object
 - `adjusted` **[optional]**
   - If the returned filter should be adjusted by `scanline_strength` or not

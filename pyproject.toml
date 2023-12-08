@@ -1,6 +1,6 @@
 [project]
 name = "pixelgreat"
-version = "1.2.1"
+version = "1.2.2"
 description = "A highly realistic RGB pixel filter"
 license= {file = "LICENSE"}
 authors = [
