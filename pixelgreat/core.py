@@ -302,7 +302,7 @@ class Pixelgreat:
 # A single use helper function to process a single image
 def pixelgreat(image,
                pixel_size,
-               output_scale=1.0,
+               output_scale=None,
                screen_type=None,
                direction=None,
                pixel_aspect=None,
@@ -320,6 +320,9 @@ def pixelgreat(image,
                bloom_strength=None,
                bloom_size=None
                ):
+    if output_scale is None:
+        output_scale = DEFAULTS["output_scale"]
+
     output_size = (
         max(round(image.width * output_scale), 3),
         max(round(image.height * output_scale), 3)
