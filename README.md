@@ -5,7 +5,7 @@
 
 <p align="center"><a href="https://pypi.org/project/pixelgreat/"><img src="https://pypi.org/static/images/logo-large.9f732b5f.svg" width="200px" alt="pixelgreat on Pypi"></a></p>
 
-[Get the GUI here!](https://github.com/nimaid/pixelgreat-gui)
+<p align="center"><a href="https://github.com/nimaid/pixelgreat-gui">Get the GUI here!</a></p>
 
 ## Installation
 First, install Python 3. Then run this command:

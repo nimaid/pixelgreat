@@ -3,7 +3,7 @@
 
 <p align="center"><img src="https://github.com/nimaid/pixelgreat/blob/main/docs/example.png?raw=true" width="800px" alt="Example of the effect"/></p>
 
-[Get the GUI here!](https://pypi.org/project/pixelgreat-gui)
+<p align="center"><a href="https://pypi.org/project/pixelgreat-gui">Get the GUI here!</a></p>
 
 ## Command Line Usage
 The command to convert a single image is `pixelgreat`:
