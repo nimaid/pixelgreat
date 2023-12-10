@@ -732,7 +732,7 @@ class CompositeFilter:
             )
         else:
             if image.size != self.output_size:
-                result = image.resize(self.output_size, resample=image.Resampling.NEAREST)
+                result = image.resize(self.output_size, resample=Image.Resampling.NEAREST)
             else:
                 result = image.copy()
 
